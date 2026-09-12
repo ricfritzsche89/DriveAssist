@@ -152,6 +152,12 @@ main.view {
 .row-card .rc-value { margin-left: auto; text-align: right; font-size: 0.85rem; color: var(--text-mid); }
 .row-card .rc-value .num { color: var(--text-hi); font-size: 1rem; }
 
+/* Detail-Karten für Verkehrsmeldungen */
+.detail-card { align-items: flex-start; }
+.detail-card .dot { margin-top: 3px; }
+.detail-card .rc-sub { margin-top: 3px; line-height: 1.45; }
+.detail-card .time-range { color: var(--text-mid); font-size: 0.72rem; }
+
 /* ---------- Buttons ---------- */
 .btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;

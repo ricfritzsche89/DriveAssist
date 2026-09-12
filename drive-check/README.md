@@ -250,3 +250,9 @@ Live-Daten fälschlich als aktuell ausgegeben werden.
 - Bereits gespeicherte Strecken werden beim Status-Check automatisch über OSRM
   aktualisiert, wenn keine Autobahn erkannt wurde — alte Strecken finden Baustellen
   damit ebenfalls.
+
+**v1.0.2 (Verkehrs-Detailinfos)**
+- Das Dashboard zeigt zu jeder relevanten Meldung **wo genau** (Titel + Abschnitt,
+  Abstand zur Route), **was** los ist (Untertitel/Beschreibung) und **wie lange**
+  (Start-/Endzeitpunkt bzw. Dauer aus den API-Zeitstempeln der Autobahn GmbH),
+  sofern die API die Daten liefert.

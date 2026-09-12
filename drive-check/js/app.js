@@ -139,6 +139,11 @@ async function computeRouteStatus(route) {
   }
 
   const filtered = window.DriveCheckGeo.filterEventsByCorridor(allEvents, polyline, corridor);
+  filtered.forEach((ev) => {
+    ev.distanceToRoute = Math.round(
+      window.DriveCheckGeo.pointToPolylineDistanceMeters({ lat: ev.latitude, lon: ev.longitude }, polyline)
+    );
+  });
   const status = filtered.length > 0 ? window.DriveCheckGeo.computeOverallStatus(filtered) : (deRoads.length > 0 ? "free" : "unknown");
 
   return {
@@ -149,6 +154,49 @@ async function computeRouteStatus(route) {
       : (deRoads.length > 0 ? "Keine relevanten Verkehrsbehinderungen" : "Für diese Strecke sind keine DE-Autobahn-Abschnitte bekannt"),
     notes,
   };
+}
+
+/* --------------------------------------------------------------------
+ * Ereignis-Details („wo genau · was · wie lange“)
+ * -------------------------------------------------------------------- */
+function fmtEventDateTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleString("de-DE", {
+    day: "2-digit", month: "2-digit", year: "2-digit",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function fmtEventTime(e) {
+  if (!e) return "";
+  const parts = [];
+  if (e.endTime) {
+    parts.push(`bis ${fmtEventDateTime(e.endTime)}`);
+    if (e.startTime && Number.isFinite(e.endTime - e.startTime) && e.endTime - e.startTime > 0) {
+      const ms = e.endTime - e.startTime;
+      const h = Math.floor(ms / 3600000);
+      const m = Math.round((ms % 3600000) / 60000);
+      parts.push(m > 0 ? `Dauer ca. ${h} h ${m} min` : `Dauer ca. ${h} h`);
+    }
+  } else if (e.startTime) {
+    parts.push(`seit ${fmtEventDateTime(e.startTime)}`);
+  }
+  return parts.join(" · ");
+}
+
+function eventCardHtml(ev) {
+  const timeRange = fmtEventTime(ev);
+  return `
+    <div class="row-card detail-card">
+      <span class="dot ${esc(ev.severity)}"></span>
+      <div>
+        <div class="rc-title">${esc(ev.title)}</div>
+        ${ev.subtitle ? `<div class="rc-sub">${esc(ev.subtitle)}</div>` : ""}
+        ${ev.description ? `<div class="rc-sub">${esc(ev.description)}</div>` : ""}
+        ${timeRange ? `<div class="rc-sub time-range">🕒 ${esc(timeRange)}</div>` : ""}
+        ${Number.isFinite(ev.distanceToRoute) ? `<div class="rc-sub time-range">📍 ca. ${ev.distanceToRoute} m neben der Route</div>` : ""}
+      </div>
+    </div>`;
 }
 
 /* --------------------------------------------------------------------
@@ -179,7 +227,9 @@ async function renderDashboard() {
   const routes = await DriveCheckDB.getAll(DriveCheckDB.STORES.routes);
   const heroEl = document.getElementById("dashboard-hero");
   const favEl = document.getElementById("dashboard-fuel-favs");
+  const evEl = document.getElementById("dashboard-traffic-events");
   const defaultRouteId = await DriveCheckDB.getSetting("defaultRouteId", null);
+  let result = null;
 
   if (!routes.length) {
     heroEl.innerHTML = `
@@ -191,7 +241,7 @@ async function renderDashboard() {
   } else {
     const route = routes.find((r) => r.id === defaultRouteId) || routes[0];
     heroEl.innerHTML = `<div class="hero"><div class="detail">Prüfe Verkehrslage …</div></div>`;
-    const result = await computeRouteStatus(route);
+    result = await computeRouteStatus(route);
     const now = new Date();
     const timeStr = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
@@ -216,12 +266,19 @@ async function renderDashboard() {
         ${statusPillHtml(result.status, STATUS_LABEL[result.status])}
         <div class="detail">${esc(result.reason)}</div>
         ${result.notes?.length ? `<div class="detail" style="color:var(--status-hindered)">${esc(result.notes.join(" · "))}</div>` : ""}
+        ${result.events?.length ? `<div class="detail" style="margin-top:8px;font-size:0.75rem;color:var(--text-low)">${result.events.length} Meldung(en) im Verkehrskorridor:</div>` : ""}
         <div class="meta-row">
           <div><span class="num">${route.durationSeconds ? fmtDuration(route.durationSeconds) : "—"}</span>Fahrzeit</div>
           <div><span class="num">${route.distanceMeters ? Math.round(route.distanceMeters / 1000) + " km" : "—"}</span>Distanz</div>
           <div><span class="num">${timeStr}</span>Letzte Prüfung</div>
         </div>
       </div>`;
+  }
+
+  if (evEl && result?.events?.length) {
+    evEl.innerHTML = `<div class="card-list">${result.events.map(eventCardHtml).join("")}</div>`;
+  } else if (evEl) {
+    evEl.innerHTML = "";
   }
 
   const favs = await DriveCheckDB.getAll(DriveCheckDB.STORES.fuelFavorites);

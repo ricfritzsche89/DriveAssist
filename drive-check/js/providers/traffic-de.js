@@ -51,17 +51,20 @@ function mapSeverity(serviceType, item) {
 function normalizeItem(serviceType, item, roadId) {
   const lat = parseFloat(item.coordinate?.lat);
   const long = parseFloat(item.coordinate?.long);
+  const startTs = Number.isFinite(Number(item.startTimestamp)) ? Number(item.startTimestamp) : null;
+  const endTs = Number.isFinite(Number(item.endTimestamp)) ? Number(item.endTimestamp) : null;
   return {
     id: item.identifier,
     country: "DE",
     type: serviceType,
     severity: mapSeverity(serviceType, item),
     title: item.title || roadId,
+    subtitle: item.subtitle || "",
     description: Array.isArray(item.description) ? item.description.join(" · ") : (item.subtitle || ""),
     latitude: Number.isFinite(lat) ? lat : null,
     longitude: Number.isFinite(long) ? long : null,
-    startTime: null,
-    endTime: null,
+    startTime: startTs,
+    endTime: endTs,
     source: "Autobahn GmbH",
     lastUpdated: new Date().toISOString(),
   };
