@@ -226,29 +226,26 @@ function fmtPriceEUR(v) {
 async function renderDashboard() {
   const routes = await DriveCheckDB.getAll(DriveCheckDB.STORES.routes);
   const heroEl = document.getElementById("dashboard-hero");
+  const routesEl = document.getElementById("dashboard-routes");
   const favEl = document.getElementById("dashboard-fuel-favs");
   const evEl = document.getElementById("dashboard-traffic-events");
   const defaultRouteId = await DriveCheckDB.getSetting("defaultRouteId", null);
-  let result = null;
 
-  if (!routes.length) {
-    heroEl.innerHTML = `
-      <div class="empty-state">
-        <p>Noch keine Strecke angelegt.<br>Lege deine erste Strecke an, um sofort ihren Verkehrsstatus zu sehen.</p>
-        <button class="btn primary" id="dash-add-route">+ Strecke anlegen</button>
-      </div>`;
-    document.getElementById("dash-add-route")?.addEventListener("click", () => showView("routes"));
-  } else {
-    const route = routes.find((r) => r.id === defaultRouteId) || routes[0];
-    heroEl.innerHTML = `<div class="hero"><div class="detail">Prüfe Verkehrslage …</div></div>`;
-    result = await computeRouteStatus(route);
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  // Status für ALLE Strecken parallel ermitteln (Übersicht im Dashboard).
+  const resultsByRouteId = {};
+  if (routes.length) {
+    await Promise.all(routes.map(async (r) => {
+      resultsByRouteId[r.id] = await computeRouteStatus(r);
+    }));
+  }
 
-    // Benachrichtigung nur bei Verschlechterung und nur, wenn der Nutzer sie
-    // in den Einstellungen aktiviert hat (siehe notify.js).
-    const notifyEnabled = await DriveCheckDB.getSetting("notifyEnabled", false);
-    if (notifyEnabled) {
+  // Benachrichtigung nur bei Verschlechterung und nur, wenn der Nutzer sie
+  // in den Einstellungen aktiviert hat (siehe notify.js). Gilt für jede Strecke.
+  const notifyEnabled = await DriveCheckDB.getSetting("notifyEnabled", false);
+  if (notifyEnabled) {
+    for (const route of routes) {
+      const result = resultsByRouteId[route.id];
+      if (!result) continue;
       const prev = await DriveCheckDB.get(DriveCheckDB.STORES.settings, `routeStatus_${route.id}`);
       const prevStatus = prev?.value?.status || null;
       if (prevStatus && prevStatus !== result.status) {
@@ -259,6 +256,20 @@ async function renderDashboard() {
         at: new Date().toISOString(),
       });
     }
+  }
+
+  if (!routes.length) {
+    heroEl.innerHTML = `
+      <div class="empty-state">
+        <p>Noch keine Strecke angelegt.<br>Lege deine erste Strecke an, um sofort ihren Verkehrsstatus zu sehen.</p>
+        <button class="btn primary" id="dash-add-route">+ Strecke anlegen</button>
+      </div>`;
+    document.getElementById("dash-add-route")?.addEventListener("click", () => showView("routes"));
+  } else {
+    const route = routes.find((r) => r.id === defaultRouteId) || routes[0];
+    const result = resultsByRouteId[route.id] || { status: "unknown" };
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
     heroEl.innerHTML = `
       <div class="hero">
@@ -275,8 +286,32 @@ async function renderDashboard() {
       </div>`;
   }
 
-  if (evEl && result?.events?.length) {
-    evEl.innerHTML = `<div class="card-list">${result.events.map(eventCardHtml).join("")}</div>`;
+  if (routesEl) {
+    routesEl.innerHTML = routes.length
+      ? `<div class="card-list">${routes.map((r) => {
+          const res = resultsByRouteId[r.id] || { status: "unknown" };
+          const isDefault = r.id === defaultRouteId;
+          const evCount = res.events?.length || 0;
+          return `
+        <div class="row-card" data-open-route="${esc(r.id)}">
+          <span class="dot ${res.status}"></span>
+          <div>
+            <div class="rc-title">${esc(r.name)}${isDefault ? " ★" : ""}</div>
+            <div class="rc-sub">${esc(r.startLabel) || "?"} → ${esc(r.endLabel) || "?"}</div>
+            <div class="rc-sub">${r.distanceMeters ? Math.round(r.distanceMeters / 1000) + " km" : ""}${r.durationSeconds ? " · " + fmtDuration(r.durationSeconds) : ""}${evCount ? " · " + evCount + " Meldung(en)" : ""}</div>
+          </div>
+          ${statusPillHtml(res.status, STATUS_LABEL[res.status])}
+        </div>`;
+        }).join("")}</div>`
+      : "";
+    routesEl.querySelectorAll("[data-open-route]").forEach((el) => {
+      el.addEventListener("click", () => showView("routes"));
+    });
+  }
+
+  if (evEl && resultsByRouteId[routes.find((r) => r.id === defaultRouteId)?.id || routes[0]?.id]?.events?.length) {
+    const heroRoute = routes.find((r) => r.id === defaultRouteId) || routes[0];
+    evEl.innerHTML = `<div class="card-list">${resultsByRouteId[heroRoute.id].events.map(eventCardHtml).join("")}</div>`;
   } else if (evEl) {
     evEl.innerHTML = "";
   }
@@ -286,15 +321,7 @@ async function renderDashboard() {
     favEl.innerHTML = `<div class="empty-state"><p>Noch keine Tankstellen-Favoriten gespeichert.</p></div>`;
   } else {
     const rows = await Promise.all(favs.map(async (f) => {
-      let priceText = "Preise werden geladen …";
-      if (f.country === "DE") {
-        const r = await window.FuelProviderDE.getPrices([f.stationId]);
-        const p = r.prices?.[f.stationId];
-        priceText = p ? `E10 ${fmtPriceEUR(p.e10)} · E5 ${fmtPriceEUR(p.e5)} · Diesel ${fmtPriceEUR(p.diesel)}` : (r.reason || "Preise nicht verfügbar");
-      } else {
-        const r = await window.FuelProviderCZ.getPrices(f.id);
-        priceText = r.available ? formatCzPrices(r.prices) : (r.reason || "Preise nicht verfügbar");
-      }
+      const priceText = await favoritePriceLine(f);
       return `<div class="row-card">
         <span class="dot ${f.country === 'DE' ? 'free' : 'unknown'}"></span>
         <div>
@@ -305,6 +332,17 @@ async function renderDashboard() {
     }));
     favEl.innerHTML = `<div class="card-list">${rows.join("")}</div>`;
   }
+}
+
+/** Anzeigezeile für einen Tankstellen-Favoriten (DE live via Tankerkönig, CZ manuell). */
+async function favoritePriceLine(f) {
+  if (f.country === "DE") {
+    const r = await window.FuelProviderDE.getPrices([f.stationId]);
+    const p = r.prices?.[f.stationId];
+    return p ? `E10 ${fmtPriceEUR(p.e10)} · E5 ${fmtPriceEUR(p.e5)} · Diesel ${fmtPriceEUR(p.diesel)}` : (r.reason || "Preise nicht verfügbar");
+  }
+  const r = await window.FuelProviderCZ.getPrices(f.id);
+  return r.available ? formatCzPrices(r.prices) : (r.reason || "Preise nicht verfügbar");
 }
 
 function formatCzPrices(prices) {
@@ -551,20 +589,25 @@ async function renderFuelView() {
   if (!favs.length) {
     listEl.innerHTML = `<div class="empty-state"><p>Noch keine Favoriten. Suche unten eine Tankstelle oder lege einen CZ-Favoriten manuell an.</p></div>`;
   } else {
-    listEl.innerHTML = `<div class="card-list">${favs.map((f) => {
+    const rows = await Promise.all(favs.map(async (f) => {
+      const priceText = await favoritePriceLine(f);
       const editBtn = f.country === "CZ"
         ? `<button class="btn ghost" data-czedit="${esc(f.id)}" style="padding:6px 10px;width:auto;font-size:0.72rem;">Preise</button>`
         : "";
       return `
       <div class="row-card">
         <span class="dot ${f.country === 'DE' ? 'free' : 'unknown'}"></span>
-        <div><div class="rc-title">${f.country === "CZ" ? "🇨🇿" : "🇩🇪"} ${esc(f.label)}</div></div>
+        <div>
+          <div class="rc-title">${f.country === "CZ" ? "🇨🇿" : "🇩🇪"} ${esc(f.label)}</div>
+          <div class="rc-sub">${esc(priceText)}</div>
+        </div>
         <div class="rc-value" style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
           ${editBtn}
           <button class="btn danger" data-favdel="${esc(f.id)}" style="padding:6px 10px;width:auto;font-size:0.72rem;">Entfernen</button>
         </div>
       </div>`;
-    }).join("")}</div>`;
+    }));
+    listEl.innerHTML = `<div class="card-list">${rows.join("")}</div>`;
     listEl.querySelectorAll("[data-favdel]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         await DriveCheckDB.delete(DriveCheckDB.STORES.fuelFavorites, btn.dataset.favdel);

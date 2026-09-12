@@ -256,3 +256,16 @@ Live-Daten fälschlich als aktuell ausgegeben werden.
   Abstand zur Route), **was** los ist (Untertitel/Beschreibung) und **wie lange**
   (Start-/Endzeitpunkt bzw. Dauer aus den API-Zeitstempeln der Autobahn GmbH),
   sofern die API die Daten liefert.
+
+**v1.1 (Dashboard-Übersicht & Preis-Anzeige)**
+- **Dashboard als Hauptseite**: Alle Strecken erscheinen als übersichtliche Karten
+  mit Verkehrsstatus-Pille (Strecke frei / Hinweis / behindert / gesperrt) sowie
+  Fahrzeit, Distanz und Meldungsanzahl; Klick auf eine Karte öffnet den
+  Strecken-Tab. Der Hero zeigt weiterhin die Standardstrecke.
+- **Preise überall sichtbar**: Die Tanken-Ansicht zeigt zu jedem Favoriten jetzt
+  ebenfalls die Preise (DE: E10/E5/Diesel live über Tankerkönig; CZ: Natural 95
+  und Diesel aus der manuellen Erfassung) — nicht mehr nur Namen.
+- Tschechische Preise bleiben bewusst manuell gepflegt: Die recherchierte
+  Fuelo.net-API sendet keine CORS-Header, ein direkter Browserabruf ohne eigenen
+  Server ist daher nicht möglich. Das Dashboard zeigt in so einem Fall klar den
+  Pflege-Hinweis statt Live-Daten vorzutäuschen.
