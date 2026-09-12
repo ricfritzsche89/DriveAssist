@@ -39,6 +39,28 @@ async function reverseGeocode(lat, lon) {
   return data.display_name || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
 }
 
+/** Extrahiert Straßen-Referenznummern ("A17", "A 17", "B6", "K1050") aus OSRM-Steps. */
+function extractRoadRefs(route) {
+  const refs = new Set();
+  for (const leg of route.legs || []) {
+    for (const step of leg.steps || []) {
+      // OSRM liefert die amtliche Referenz meist in step.ref; step.name enthält
+      // bei unbeschrifteten Strecken oft nur den Freitext. Beides auswerten.
+      for (const raw of [step.ref, step.name]) {
+        if (!raw || typeof raw !== "string") continue;
+        // Erlaubt Schreibweisen wie "A17", "A 17", "A17a", "A 17 (Richtung Dresden)",
+        // weist aber "Bruchsaler Straße" o. ä. korrekt ab.
+        const re = /\b([A-ZÄÖÜ])(?:\s*)(\d{1,4}[a-z]?)\b/gi;
+        let m;
+        while ((m = re.exec(raw)) !== null) {
+          refs.add(m[1].toUpperCase() + m[2]);
+        }
+      }
+    }
+  }
+  return Array.from(refs);
+}
+
 /**
  * Route zwischen Punkten berechnen. points: [{lat, lon}, ...] (Start, Zwischen*, Ziel)
  * Rückgabe: { available, polyline: [{lat,lon}], distanceMeters, durationSeconds, roadNames }
@@ -60,20 +82,14 @@ async function getRoute(points) {
     const route = data.routes[0];
     const polyline = route.geometry.coordinates.map(([lon, lat]) => ({ lat, lon }));
 
-    // Straßennamen aus den Steps extrahieren (für die Autobahn-DE-Korridorabfrage)
-    const roadNames = new Set();
-    for (const leg of route.legs || []) {
-      for (const step of leg.steps || []) {
-        if (step.name) roadNames.add(step.name.split(" ")[0]); // "A17", "B172" etc.
-      }
-    }
+    const roadNames = extractRoadRefs(route);
 
     return {
       available: true,
       polyline,
       distanceMeters: route.distance,
       durationSeconds: route.duration,
-      roadNames: Array.from(roadNames),
+      roadNames,
     };
   } catch (err) {
     return { available: false, reason: `Routing-Dienst nicht erreichbar: ${err.message}` };

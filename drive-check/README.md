@@ -243,3 +243,10 @@ Live-Daten fälschlich als aktuell ausgegeben werden.
   CZ-Favoriten bearbeitbar, bessere Tschechien-Erkennung für Routen-Label,
   HTML-Escaping aller Nutzer-/Fremdeingaben, Import als echte Wiederherstellung,
   Stundenformat bei langen Fahrzeiten, Preisformat geputzt.
+
+**v1.0.1 (Verkehrs-Erkennung repariert)**
+- Autobahn-Erkennung robuster: OSRM-Straßennamen werden jetzt aus `ref` und `name`
+  extrahiert und Toleranz für Schreibweisen wie „A 17“ berücksichtigt.
+- Bereits gespeicherte Strecken werden beim Status-Check automatisch über OSRM
+  aktualisiert, wenn keine Autobahn erkannt wurde — alte Strecken finden Baustellen
+  damit ebenfalls.

@@ -100,7 +100,33 @@ async function computeRouteStatus(route) {
   const notes = [];
   let allEvents = [];
 
-  const deRoads = (route.roadNames || []).filter((r) => /^A\d+/i.test(r));
+  // Für bereits gespeicherte Strecken ggf. die Straßen-Referenzen aktualisieren:
+  // ältere Versionen haben Autobahnen oft nicht erkannt (siehe routing.js).
+  let polyline = route.polyline;
+  let roadNames = route.roadNames || [];
+  const hasAutoRoad = roadNames.some((r) => /^A\d+/i.test(r));
+  if (!hasAutoRoad && route.startCoord && route.endCoord) {
+    const fresh = await window.RoutingProvider.getRoute([route.startCoord, route.endCoord]);
+    if (fresh.available) {
+      polyline = fresh.polyline;
+      roadNames = fresh.roadNames;
+      if (
+        route.roadNames?.join("|") !== fresh.roadNames.join("|") ||
+        route.distanceMeters !== fresh.distanceMeters ||
+        route.durationSeconds !== fresh.durationSeconds
+      ) {
+        await DriveCheckDB.put(DriveCheckDB.STORES.routes, {
+          ...route,
+          polyline: fresh.polyline,
+          roadNames: fresh.roadNames,
+          distanceMeters: fresh.distanceMeters,
+          durationSeconds: fresh.durationSeconds,
+        });
+      }
+    }
+  }
+
+  const deRoads = roadNames.filter((r) => /^A\d+/i.test(r));
   if (deRoads.length > 0) {
     const { events, errors } = await window.TrafficProviderDE.getEventsForRoads(deRoads);
     allEvents.push(...events);
@@ -112,7 +138,7 @@ async function computeRouteStatus(route) {
     notes.push(czResult.reason);
   }
 
-  const filtered = window.DriveCheckGeo.filterEventsByCorridor(allEvents, route.polyline, corridor);
+  const filtered = window.DriveCheckGeo.filterEventsByCorridor(allEvents, polyline, corridor);
   const status = filtered.length > 0 ? window.DriveCheckGeo.computeOverallStatus(filtered) : (deRoads.length > 0 ? "free" : "unknown");
 
   return {
