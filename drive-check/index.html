@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>Drive Check</title>
+<meta name="description" content="Strecken, Verkehr und Tankstellenpreise für Deutschland und Tschechien – offline-fähig, ohne Konto." />
+<meta name="theme-color" content="#0b0d10" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="icon" href="./icons/icon-192.png" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <span class="logo-dot"></span>
+    <h1>Drive Check</h1>
+    <span class="conn-state" id="conn-state">…</span>
+  </header>
+
+  <!-- ============ DASHBOARD ============ -->
+  <main class="view" id="view-dashboard">
+    <div id="dashboard-hero"></div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>VERKEHR</h2>
+        <a class="link" href="#map" onclick="showView('map')">Karte</a>
+      </div>
+      <p style="color:var(--text-low);font-size:0.75rem;">
+        Deutschland: Autobahn GmbH API (live). Tschechien: aktuell keine Live-Quelle verfügbar (siehe Einstellungen → Über).
+      </p>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>TANKEN</h2>
+        <a class="link" href="#fuel" onclick="showView('fuel')">Alle</a>
+      </div>
+      <div id="dashboard-fuel-favs"></div>
+    </div>
+  </main>
+
+  <!-- ============ MEINE STRECKEN ============ -->
+  <main class="view" id="view-routes" hidden>
+    <div class="section">
+      <div class="section-head"><h2>MEINE STRECKEN</h2></div>
+      <div id="routes-list"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2 id="route-form-title">NEUE STRECKE</h2></div>
+      <form id="route-form">
+        <label for="route-name">Name</label>
+        <input id="route-name" type="text" placeholder="z. B. Zuhause → Arbeit" required />
+
+        <label for="route-start-search">Startpunkt</label>
+        <input id="route-start-search" type="text" placeholder="Adresse oder Ort suchen …" autocomplete="off" required />
+        <div id="route-start-results"></div>
+
+        <label for="route-end-search">Zielpunkt</label>
+        <input id="route-end-search" type="text" placeholder="Adresse oder Ort suchen …" autocomplete="off" required />
+        <div id="route-end-results"></div>
+
+        <label for="route-corridor">Verkehrskorridor</label>
+        <select id="route-corridor">
+          <option value="250">250 m</option>
+          <option value="500" selected>500 m</option>
+          <option value="1000">1000 m</option>
+          <option value="2000">2000 m</option>
+        </select>
+
+        <div id="route-preview" style="margin-top:10px;"></div>
+        <div id="route-map" style="height:200px;border-radius:14px;overflow:hidden;margin-top:10px;border:1px solid var(--line);"></div>
+
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn primary" type="submit">Strecke speichern</button>
+          <button class="btn ghost" type="button" id="route-cancel-edit" hidden>Abbrechen</button>
+        </div>
+      </form>
+      <p style="color:var(--text-low);font-size:0.72rem;margin-top:10px;">
+        Ortssuche über OpenStreetMap/Nominatim, Route über den öffentlichen OSRM-Dienst — beide kostenlos.
+      </p>
+    </div>
+  </main>
+
+  <!-- ============ KARTE ============ -->
+  <main class="view" id="view-map" hidden>
+    <div class="section-head"><h2>KARTE</h2></div>
+    <div class="btn-row" style="margin-bottom:10px;">
+      <button class="btn ghost" id="map-locate">📍 Mein Standort</button>
+    </div>
+    <div id="map-canvas"></div>
+  </main>
+
+  <!-- ============ TANKSTELLEN ============ -->
+  <main class="view" id="view-fuel" hidden>
+    <div class="section">
+      <div class="section-head"><h2>MEINE FAVORITEN</h2></div>
+      <div id="fuel-favorites-list"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>🇩🇪 TANKSTELLE SUCHEN</h2></div>
+      <button class="btn" id="fuel-search-de-btn">In meiner Nähe suchen</button>
+      <p style="color:var(--text-low);font-size:0.72rem;margin-top:8px;">
+        Benötigt einen kostenlosen Tankerkönig-API-Key (Einstellungen) und deinen Standort.
+      </p>
+      <div id="fuel-search-de-results" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2 id="fuel-cz-form-title">🇨🇿 CZ-FAVORIT MANUELL ANLEGEN</h2></div>
+      <form id="fuel-cz-form">
+        <label for="fuel-cz-label">Name</label>
+        <input id="fuel-cz-label" type="text" placeholder="z. B. CZ Favorit Liberec" required />
+        <label for="fuel-cz-natural95">Natural 95 (Kč/L)</label>
+        <input id="fuel-cz-natural95" type="number" step="0.10" placeholder="42,50" />
+        <label for="fuel-cz-diesel">Diesel (Kč/L)</label>
+        <input id="fuel-cz-diesel" type="number" step="0.10" placeholder="45,90" />
+        <div style="margin-top:14px"><button class="btn primary" type="submit" id="fuel-cz-submit">Favorit speichern</button></div>
+        <button class="btn ghost" type="button" id="fuel-cz-cancel" hidden style="margin-top:8px;">Abbrechen</button>
+      </form>
+      <p style="color:var(--text-low);font-size:0.72rem;margin-top:8px;">
+        Für Tschechien gibt es aktuell keine verifizierte, kostenlose Live-API (siehe Einstellungen → Über).
+        Preise daher manuell erfassen und bei Bedarf aktualisieren.
+      </p>
+    </div>
+  </main>
+
+  <!-- ============ EINSTELLUNGEN ============ -->
+  <main class="view" id="view-settings" hidden>
+    <div class="section">
+      <div class="section-head"><h2>STRECKEN</h2></div>
+      <label for="settings-default-route">Standardstrecke (Dashboard)</label>
+      <select id="settings-default-route"></select>
+
+      <label for="settings-corridor">Verkehrskorridor</label>
+      <select id="settings-corridor">
+        <option value="250">250 m</option>
+        <option value="500">500 m</option>
+        <option value="1000">1000 m</option>
+        <option value="2000">2000 m</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>API-ZUGÄNGE</h2></div>
+      <label for="settings-api-key">Tankerkönig-API-Key (Deutschland)</label>
+      <input id="settings-api-key" type="text" placeholder="kostenlos unter creativecommons.tankerkoenig.de" />
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>ANZEIGE</h2></div>
+      <label for="settings-units">Einheiten</label>
+      <select id="settings-units">
+        <option value="km">Kilometer</option>
+        <option value="mi">Meilen</option>
+      </select>
+
+      <label style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+        <input type="checkbox" id="settings-notify" style="width:auto;" />
+        <span style="margin:0;color:var(--text-hi);font-size:0.85rem;">Benachrichtigung bei neuer Verkehrsbehinderung</span>
+      </label>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>DATEN</h2></div>
+      <div class="btn-row">
+        <button class="btn" id="export-data">Daten exportieren</button>
+        <button class="btn" id="import-data-btn" onclick="document.getElementById('import-data-input').click()">Daten importieren</button>
+      </div>
+      <input type="file" id="import-data-input" accept="application/json" hidden />
+      <div style="margin-top:10px">
+        <button class="btn ghost" id="clear-cache">Cache leeren</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>ÜBER</h2></div>
+      <p style="color:var(--text-mid);font-size:0.82rem;line-height:1.6;">
+        Drive Check speichert alle Daten ausschließlich lokal auf diesem Gerät (IndexedDB).
+        Kein Konto, keine Cloud, kein Tracking.<br><br>
+        <strong>Datenquellen:</strong><br>
+        🚧 Verkehr DE: Autobahn GmbH API (frei, live)<br>
+        🚧 Verkehr CZ: aktuell nicht verfügbar (NDIC erfordert eigenen Server, siehe README)<br>
+        ⛽ Tanken DE: Tankerkönig / MTS-K (eigener kostenloser API-Key nötig)<br>
+        ⛽ Tanken CZ: keine verifizierte freie API gefunden — manuelle Erfassung<br>
+        🗺️ Karte/Routing: OpenStreetMap, Nominatim, OSRM (alle frei)<br><br>
+        Version 1.0 · alle 12 Phasen umgesetzt.
+      </p>
+    </div>
+  </main>
+
+  <nav class="tabbar">
+    <button data-view="dashboard" class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-8 9 8"/><path d="M5 10v9h14v-9"/></svg>
+      Start
+    </button>
+    <button data-view="routes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8 6h6a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4H8"/></svg>
+      Strecken
+    </button>
+    <button data-view="map">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 20l-6-2V4l6 2 6-2 6 2v14l-6-2-6 2z"/><path d="M9 6v14M15 4v14"/></svg>
+      Karte
+    </button>
+    <button data-view="fuel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v15"/><path d="M4 11h8"/><path d="M14 9l3 2v6a1.5 1.5 0 0 0 3 0v-4l-2-2"/></svg>
+      Tanken
+    </button>
+    <button data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+      Mehr
+    </button>
+  </nav>
+
+  <div id="toast"></div>
+</div>
+
+<script src="./js/db.js"></script>
+<script src="./js/geo.js"></script>
+<script src="./js/routing.js"></script>
+<script src="./js/map.js"></script>
+<script src="./js/notify.js"></script>
+<script src="./js/providers/traffic-de.js"></script>
+<script src="./js/providers/traffic-cz.js"></script>
+<script src="./js/providers/fuel-de.js"></script>
+<script src="./js/providers/fuel-cz.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
