@@ -270,6 +270,25 @@ Live-Daten fälschlich als aktuell ausgegeben werden.
   Server ist daher nicht möglich. Das Dashboard zeigt in so einem Fall klar den
   Pflege-Hinweis statt Live-Daten vorzutäuschen.
 
+**v1.3 (Cockpit-Dashboard)**
+- **Neues Dashboard-Design:** HUD-Kopf mit Datum/Uhrzeit, LIVE-Badge und
+  tageszeitabhängiger Begrüßung statt statischem Kopfteil.
+- **Live-Route-Hero:** Tägliche Route mit Autobahn-Badge, Status, Verzögerungs-
+  Callout (erste Meldung + „+n weitere“), Telemetrie mit Fahrzeit, Distanz
+  und **berechneter Ankunftszeit (ETA)** sowie Aktionsknöpfen „Navigation
+  starten“ (Google-Maps-Directions öffnen) und „Alternative prüfen“.
+- **Streckenmeldungen:** Neue Incident-Karten mit Schweregrad-Icon, Titel,
+  Zeitstempel („vor X min“), Beschreibung, Abstand zur Route und Dauer.
+  Die Sektion erscheint nur, wenn es echte Meldungen gibt.
+- **Verkehrsfluss & Tempo:** Visualisierte Stau-/Baustellen-Positionen entlang
+  der Route als farbige Segmente (frei/Hinweis/behindert/gesperrt) auf einer
+  Flow-Bar mit Legende – mit Positionsmarker und Start/Ziel-Labels.
+- **Tanken:** Kompakte Favoritenkarten mit Preis-Matrix (Diesel/E10 bzw.
+  Natural 95/Diesel), „Bestpreis“-Badge für den günstigsten DE-Diesel,
+  Live/manuell-Kennzeichnung und aggregiertem Bestpreis-/Schnitt-Callout.
+- **Schnellzugriff:** Vier Shortcuts (Routen-Check, Karte, Tanken, Mehr),
+  die direkt in die jeweiligen Tabs navigieren.
+
 **v1.2 (Tanken-Ranking)**
 - **Diesel/Benzin-Umschalter**: In der Tanken-Ansicht wählst du per Segment die
   Kraftstoffart; die Favoritenliste stellt sich um (Diesel / E5, CZ: Natural 95).

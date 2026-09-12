@@ -184,17 +184,40 @@ function fmtEventTime(e) {
   return parts.join(" · ");
 }
 
-function eventCardHtml(ev) {
-  const timeRange = fmtEventTime(ev);
+function incidentIcon(sev) {
+  if (sev === "closed") return "🚫";
+  if (sev === "hindered") return "🚧";
+  if (sev === "notice") return "⚠️";
+  return "ℹ️";
+}
+
+function timeAgo(ts) {
+  if (!ts) return "";
+  const t = new Date(ts).getTime();
+  if (!Number.isFinite(t)) return "";
+  const diff = Date.now() - t;
+  if (diff < 60000) return "gerade eben";
+  if (diff < 3600000) return `vor ${Math.floor(diff / 60000)} min`;
+  if (diff < 86400000) return `vor ${Math.floor(diff / 3600000)} h`;
+  return new Date(ts).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+}
+
+function incidentCardHtml(ev) {
+  const sev = ev.severity || "notice";
+  const metaParts = [];
+  if (Number.isFinite(ev.distanceToRoute)) metaParts.push(`ca. ${ev.distanceToRoute} m neben der Route`);
+  const dauer = fmtEventTime(ev);
+  if (dauer) metaParts.push(dauer);
   return `
-    <div class="row-card detail-card">
-      <span class="dot ${esc(ev.severity)}"></span>
-      <div>
-        <div class="rc-title">${esc(ev.title)}</div>
-        ${ev.subtitle ? `<div class="rc-sub">${esc(ev.subtitle)}</div>` : ""}
-        ${ev.description ? `<div class="rc-sub">${esc(ev.description)}</div>` : ""}
-        ${timeRange ? `<div class="rc-sub time-range">🕒 ${esc(timeRange)}</div>` : ""}
-        ${Number.isFinite(ev.distanceToRoute) ? `<div class="rc-sub time-range">📍 ca. ${ev.distanceToRoute} m neben der Route</div>` : ""}
+    <div class="incident-card">
+      <span class="incident-ico ${sev}">${incidentIcon(sev)}</span>
+      <div class="incident-body">
+        <div class="incident-head ${sev}">
+          <span class="incident-title">${esc(ev.title)}</span>
+          <span class="incident-time">${esc(timeAgo(ev.startTime || ev.lastUpdated))}</span>
+        </div>
+        <div class="incident-sub">${esc(ev.description || ev.subtitle || "")}</div>
+        ${metaParts.length ? `<div class="incident-meta">${esc(metaParts.join(" · "))}</div>` : ""}
       </div>
     </div>`;
 }
@@ -202,10 +225,6 @@ function eventCardHtml(ev) {
 /* --------------------------------------------------------------------
  * Dashboard
  * -------------------------------------------------------------------- */
-function statusPillHtml(status, label) {
-  return `<span class="status-pill"><span class="dot ${status}"></span>${label}</span>`;
-}
-
 function fmtDuration(seconds) {
   if (!Number.isFinite(seconds)) return "—";
   const min = Math.round(seconds / 60);
@@ -223,15 +242,177 @@ function fmtPriceEUR(v) {
   return `${s} €`;
 }
 
+function greetingText() {
+  const h = new Date().getHours();
+  if (h < 5) return "Gute Nacht";
+  if (h < 11) return "Guten Morgen";
+  if (h < 18) return "Guten Tag";
+  return "Guten Abend";
+}
+
+function clamp01(v) {
+  return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
+function updateCockpitClock() {
+  const el = document.getElementById("cockpit-live-timestamp");
+  if (el) {
+    const now = new Date();
+    const opts = { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" };
+    el.textContent = now.toLocaleDateString("de-DE", opts).replace(",", " ·");
+  }
+  const g = document.getElementById("dash-greeting");
+  if (g) g.textContent = greetingText();
+}
+
+function fmtEta(seconds) {
+  if (!Number.isFinite(seconds)) return "—";
+  return new Date(Date.now() + seconds * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+}
+
+function progressAlongRoute(polyline, point) {
+  if (!Array.isArray(polyline) || polyline.length < 2 || !point || !Number.isFinite(point.latitude)) return null;
+  let best = 0;
+  let bestD = Infinity;
+  for (let i = 0; i < polyline.length; i++) {
+    const p = polyline[i];
+    if (!p || !Number.isFinite(p.lat) || !Number.isFinite(p.lon)) continue;
+    const dLat = p.lat - point.latitude;
+    const dLon = (p.lon - point.longitude) * Math.cos((p.lat * Math.PI) / 180);
+    const d = dLat * dLat + dLon * dLon;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best / (polyline.length - 1);
+}
+
+function flowCardHtml(route, events) {
+  const poly = route?.polyline;
+  const hasPoly = Array.isArray(poly) && poly.length >= 2;
+  const segs = [];
+  const seen = new Set();
+  if (hasPoly) {
+    for (const ev of events || []) {
+      if (!ev || !Number.isFinite(ev.latitude) || !Number.isFinite(ev.longitude)) continue;
+      const t = progressAlongRoute(poly, { latitude: ev.latitude, longitude: ev.longitude });
+      if (t === null || seen.has(t)) continue;
+      seen.add(t);
+      segs.push({ t, sev: ev.severity || "notice" });
+    }
+  }
+  const segHtml = segs.map((s) => {
+    const left = clamp01(s.t) * 95;
+    return `<span class="flow-seg ${s.sev}" style="left:${left.toFixed(1)}%;width:5%;"></span>`;
+  }).join("");
+  const start = (route?.startLabel || "Start").split(",")[0];
+  const end = (route?.endLabel || "Ziel").split(",")[0];
+  return `
+    <div class="flow-card">
+      <div class="flow-bar">${segHtml}<span class="flow-pos"></span></div>
+      <div class="flow-labels">
+        <span class="flow-start">${esc(start)}</span>
+        <span class="flow-end">${esc(end)}</span>
+      </div>
+      <div class="flow-legend">
+        <span><i class="free"></i>frei</span>
+        <span><i class="notice"></i>Hinweis</span>
+        <span><i class="hindered"></i>behindert</span>
+        <span><i class="closed"></i>gesperrt</span>
+      </div>
+      ${!hasPoly ? `<div class="flow-empty">Keine Routenpositionsdaten – Verteilung nur schematisch.</div>` : ""}
+    </div>`;
+}
+
+async function dashboardFuelPrices(f) {
+  if (f.country === "DE") {
+    const r = await window.FuelProviderDE.getPrices([f.stationId]);
+    const p = r.prices?.[f.stationId];
+    if (p && (Number.isFinite(p.diesel) || Number.isFinite(p.e10))) {
+      return { live: true, diesel: p.diesel, e10: p.e10 };
+    }
+    return { live: false, note: r.reason || "Preise nicht verfügbar" };
+  }
+  const r = await window.FuelProviderCZ.getPrices(f.id);
+  if (r.available) return { manual: true, prices: r.prices };
+  return { manual: true, note: r.reason || "keine Preise hinterlegt" };
+}
+
+function fuelCardHtml(f, prices, bestStationId) {
+  const flag = f.country === "CZ" ? "🇨🇿" : "🇩🇪";
+  const isBest = f.country === "DE" && !!bestStationId && f.stationId === bestStationId;
+  const badges = [];
+  if (isBest) badges.push('<span class="pf-badge best">Bestpreis</span>');
+  if (prices.live) badges.push('<span class="pf-badge live">Live</span>');
+  else if (prices.manual) badges.push('<span class="pf-badge manual">manuell</span>');
+  const sub = f.country === "CZ"
+    ? (prices.manual && prices.prices ? "Manuell gepflegte Preise" : prices.note || "keine Preise hinterlegt")
+    : (prices.live ? "Live-Preise via Tankerkönig" : prices.note || "Preise nicht verfügbar");
+  let grid = "";
+  if (prices.live && Number.isFinite(prices.diesel) && Number.isFinite(prices.e10)) {
+    grid = `
+      <div class="price-grid">
+        <div class="price-cell ${isBest ? "best" : ""}"><span class="price-label">Diesel</span><span class="price-val">${esc(fmtPriceEUR(prices.diesel))}</span></div>
+        <div class="price-cell"><span class="price-label">E10</span><span class="price-val">${esc(fmtPriceEUR(prices.e10))}</span></div>
+      </div>`;
+  } else if (prices.manual && prices.prices) {
+    const cells = [];
+    if (Number.isFinite(prices.prices.natural95)) cells.push(['<span class="price-label">Natural 95</span>', `${esc(String(prices.prices.natural95))} Kč`]);
+    if (Number.isFinite(prices.prices.diesel)) cells.push(['<span class="price-label">Diesel</span>', `${esc(String(prices.prices.diesel))} Kč`]);
+    if (cells.length) {
+      grid = `<div class="price-grid">${cells.map(([lab, val]) => `<div class="price-cell"><div>${lab}</div><span class="price-val">${val}</span></div>`).join("")}</div>`;
+    }
+  }
+  return `
+    <div class="fuel-card">
+      <div class="fuel-card-head">
+        <div>
+          <div class="fuel-card-name">${flag} ${esc(f.label)}</div>
+          <div class="fuel-card-badges">${badges.join("")}</div>
+          <div class="fuel-card-sub">${esc(sub)}</div>
+        </div>
+        <button class="fuel-mini fuel-card-cta" data-go="fuel">Preise</button>
+      </div>
+      ${grid}
+    </div>`;
+}
+
+function bindQuickAccess() {
+  document.querySelectorAll("#view-dashboard .quick-item").forEach((el) => {
+    if (el.dataset.bound) return;
+    el.addEventListener("click", () => showView(el.dataset.go));
+    el.dataset.bound = "1";
+  });
+}
+
+function startNavigation(route) {
+  const s = route?.startCoord;
+  const e = route?.endCoord;
+  if (s && e && Number.isFinite(s.lat) && Number.isFinite(e.lat)) {
+    if (!navigator.onLine) {
+      toast("Offline – Navigation ist ohne Verbindung nicht möglich.");
+      return;
+    }
+    const o = `${s.lat},${s.lon}`;
+    const d = `${e.lat},${e.lon}`;
+    window.open(`https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}&travelmode=driving`, "_blank", "noopener");
+    return;
+  }
+  toast("Für diese Strecke liegen keine Koordinaten vor.");
+}
+
 async function renderDashboard() {
   const routes = await DriveCheckDB.getAll(DriveCheckDB.STORES.routes);
   const heroEl = document.getElementById("dashboard-hero");
-  const routesEl = document.getElementById("dashboard-routes");
-  const favEl = document.getElementById("dashboard-fuel-favs");
   const evEl = document.getElementById("dashboard-traffic-events");
+  const wrapEl = document.getElementById("dash-disruptions-wrap");
+  const titleEl = document.getElementById("dash-disruptions-title");
+  const chipEl = document.getElementById("dash-disruptions-chip");
+  const favEl = document.getElementById("dashboard-fuel-favs");
+  const flowEl = document.getElementById("dash-flow");
   const defaultRouteId = await DriveCheckDB.getSetting("defaultRouteId", null);
 
-  // Status für ALLE Strecken parallel ermitteln (Übersicht im Dashboard).
+  updateCockpitClock();
+  bindQuickAccess();
+
   const resultsByRouteId = {};
   if (routes.length) {
     await Promise.all(routes.map(async (r) => {
@@ -239,8 +420,6 @@ async function renderDashboard() {
     }));
   }
 
-  // Benachrichtigung nur bei Verschlechterung und nur, wenn der Nutzer sie
-  // in den Einstellungen aktiviert hat (siehe notify.js). Gilt für jede Strecke.
   const notifyEnabled = await DriveCheckDB.getSetting("notifyEnabled", false);
   if (notifyEnabled) {
     for (const route of routes) {
@@ -258,99 +437,115 @@ async function renderDashboard() {
     }
   }
 
-  if (!routes.length) {
+  const heroRoute = routes.find((r) => r.id === defaultRouteId) || routes[0];
+
+  if (!heroRoute) {
     heroEl.innerHTML = `
-      <div class="empty-state">
-        <p>Noch keine Strecke angelegt.<br>Lege deine erste Strecke an, um sofort ihren Verkehrsstatus zu sehen.</p>
-        <button class="btn primary" id="dash-add-route">+ Strecke anlegen</button>
+      <div class="hero-v2">
+        <div class="hero-head">
+          <span class="hero-icon">🧭</span>
+          <div class="hero-titles">
+            <span class="hero-kicker">Tägliche Route</span>
+            <span class="hero-title">Noch keine Strecke</span>
+          </div>
+        </div>
+        <div class="hero-detail">Lege deine erste Strecke an, um Live-Verkehr, Fahrzeiten und Tankpreise zu sehen.</div>
+        <div class="hero-actions" style="grid-template-columns:1fr;margin-top:14px;">
+          <button class="btn primary" id="dash-add-route">+ Strecke anlegen</button>
+        </div>
       </div>`;
     document.getElementById("dash-add-route")?.addEventListener("click", () => showView("routes"));
   } else {
-    const route = routes.find((r) => r.id === defaultRouteId) || routes[0];
-    const result = resultsByRouteId[route.id] || { status: "unknown" };
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    const result = resultsByRouteId[heroRoute.id] || { status: "unknown" };
+    const roadBadge = (heroRoute.roadNames || []).filter((r) => /^A\d+/i.test(r)).slice(0, 3).join(" • ");
+    const dur = heroRoute.durationSeconds;
+
+    let callout = "";
+    if (result.events?.length) {
+      const extra = result.events.length > 1 ? ` · +${result.events.length - 1} weitere Meldung(en)` : "";
+      callout = `<div class="hero-callout">🚧 ${esc(result.events[0].title)}${esc(extra)}</div>`;
+    } else if (result.status === "free") {
+      callout = `<div class="hero-callout off">✅ Keine Behinderungen auf deiner Route</div>`;
+    }
 
     heroEl.innerHTML = `
-      <div class="hero">
-        <div class="route-line">🏠 ${esc(route.startLabel) || "Start"} <span class="sep">→</span> 🏁 ${esc(route.endLabel) || "Ziel"}</div>
-        ${statusPillHtml(result.status, STATUS_LABEL[result.status])}
-        <div class="detail">${esc(result.reason)}</div>
-        ${result.notes?.length ? `<div class="detail" style="color:var(--status-hindered)">${esc(result.notes.join(" · "))}</div>` : ""}
-        ${result.events?.length ? `<div class="detail" style="margin-top:8px;font-size:0.75rem;color:var(--text-low)">${result.events.length} Meldung(en) im Verkehrskorridor:</div>` : ""}
-        <div class="meta-row">
-          <div><span class="num">${route.durationSeconds ? fmtDuration(route.durationSeconds) : "—"}</span>Fahrzeit</div>
-          <div><span class="num">${route.distanceMeters ? Math.round(route.distanceMeters / 1000) + " km" : "—"}</span>Distanz</div>
-          <div><span class="num">${timeStr}</span>Letzte Prüfung</div>
+      <div class="hero-v2">
+        <div class="hero-head">
+          <span class="hero-icon">🧭</span>
+          <div class="hero-titles">
+            <span class="hero-kicker">Tägliche Route</span>
+            <span class="hero-title">${esc(heroRoute.name)}</span>
+          </div>
+          ${roadBadge ? `<span class="hero-badge">${esc(roadBadge)}</span>` : ""}
+        </div>
+        <span class="hero-status"><span class="dot ${result.status}"></span>${esc(STATUS_LABEL[result.status] || "STATUS UNBEKANNT")}</span>
+        <div class="hero-detail">${esc(result.reason)}${result.notes?.length ? ` <span style="color:var(--status-hindered)">(${esc(result.notes.join(" · "))})</span>` : ""}</div>
+        ${callout}
+        <div class="telemetry">
+          <div class="metric ${result.status === "hindered" || result.status === "closed" ? "warn" : "inv"}">
+            <span class="metric-label">Fahrzeit</span>
+            <span class="metric-value">${dur ? esc(fmtDuration(dur)) : "—"}</span>
+            <span class="metric-sub">${esc((heroRoute.startLabel || "Start").split(",")[0])} → ${esc((heroRoute.endLabel || "Ziel").split(",")[0])}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Distanz</span>
+            <span class="metric-value">${heroRoute.distanceMeters ? Math.round(heroRoute.distanceMeters / 1000) + " km" : "—"}</span>
+            <span class="metric-sub">Optimiert</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Ankunft</span>
+            <span class="metric-value">${dur ? esc(fmtEta(dur)) : "—"}</span>
+            <span class="metric-sub">in ${dur ? esc(fmtDuration(dur)) : "—"}</span>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn primary" id="dash-nav-start">🧭 Navigation starten</button>
+          <button class="btn ghost" id="dash-alt-route">⇄ Alternative prüfen</button>
         </div>
       </div>`;
+    document.getElementById("dash-nav-start")?.addEventListener("click", () => startNavigation(heroRoute));
+    document.getElementById("dash-alt-route")?.addEventListener("click", () => showView("routes"));
   }
 
-  if (routesEl) {
-    routesEl.innerHTML = routes.length
-      ? `<div class="card-list">${routes.map((r) => {
-          const res = resultsByRouteId[r.id] || { status: "unknown" };
-          const isDefault = r.id === defaultRouteId;
-          const evCount = res.events?.length || 0;
-          return `
-        <div class="row-card" data-open-route="${esc(r.id)}">
-          <span class="dot ${res.status}"></span>
-          <div>
-            <div class="rc-title">${esc(r.name)}${isDefault ? " ★" : ""}</div>
-            <div class="rc-sub">${esc(r.startLabel) || "?"} → ${esc(r.endLabel) || "?"}</div>
-            <div class="rc-sub">${r.distanceMeters ? Math.round(r.distanceMeters / 1000) + " km" : ""}${r.durationSeconds ? " · " + fmtDuration(r.durationSeconds) : ""}${evCount ? " · " + evCount + " Meldung(en)" : ""}</div>
-          </div>
-          ${statusPillHtml(res.status, STATUS_LABEL[res.status])}
-        </div>`;
-        }).join("")}</div>`
-      : "";
-    routesEl.querySelectorAll("[data-open-route]").forEach((el) => {
-      el.addEventListener("click", () => showView("routes"));
-    });
+  const heroEvents = heroRoute ? (resultsByRouteId[heroRoute.id]?.events || []) : [];
+  if (wrapEl && heroRoute) {
+    wrapEl.hidden = heroEvents.length === 0;
+    if (heroEvents.length) {
+      if (titleEl) titleEl.textContent = heroEvents.length === 1 ? "1 STRECKENMELDUNG" : `${heroEvents.length} STRECKENMELDUNGEN`;
+      if (chipEl) chipEl.textContent = navigator.onLine ? "AKTIV" : "OFFLINE";
+      if (evEl) evEl.innerHTML = heroEvents.map(incidentCardHtml).join("");
+    } else if (evEl) {
+      evEl.innerHTML = "";
+    }
   }
 
-  if (evEl && resultsByRouteId[routes.find((r) => r.id === defaultRouteId)?.id || routes[0]?.id]?.events?.length) {
-    const heroRoute = routes.find((r) => r.id === defaultRouteId) || routes[0];
-    evEl.innerHTML = `<div class="card-list">${resultsByRouteId[heroRoute.id].events.map(eventCardHtml).join("")}</div>`;
-  } else if (evEl) {
-    evEl.innerHTML = "";
+  if (flowEl) {
+    flowEl.innerHTML = heroRoute
+      ? flowCardHtml(heroRoute, heroEvents)
+      : '<div class="flow-card">Lege zuerst eine Strecke an.</div>';
   }
 
   const favs = await DriveCheckDB.getAll(DriveCheckDB.STORES.fuelFavorites);
   if (!favs.length) {
-    favEl.innerHTML = `<div class="empty-state"><p>Noch keine Tankstellen-Favoriten gespeichert.</p></div>`;
+    favEl.innerHTML = `<div class="empty-state"><p>Noch keine Tankstellen-Favoriten gespeichert.</p><button class="btn" data-go="fuel">⛽ Tanken öffnen</button></div>`;
+    favEl.querySelector("[data-go]")?.addEventListener("click", () => showView("fuel"));
   } else {
-    const rows = await Promise.all(favs.map(async (f) => {
-      const priceText = await favoritePriceLine(f);
-      return `<div class="row-card">
-        <span class="dot ${f.country === 'DE' ? 'free' : 'unknown'}"></span>
-        <div>
-          <div class="rc-title">${f.country === "CZ" ? "🇨🇿" : "🇩🇪"} ${esc(f.label)}</div>
-          <div class="rc-sub">${esc(priceText)}</div>
-        </div>
-      </div>`;
-    }));
-    favEl.innerHTML = `<div class="card-list">${rows.join("")}</div>`;
-  }
-}
+    const rows = await Promise.all(favs.map(async (f) => ({ f, prices: await dashboardFuelPrices(f) })));
+    const deDiesel = rows
+      .filter((r) => r.f.country === "DE" && Number.isFinite(r.prices.diesel))
+      .sort((a, b) => a.prices.diesel - b.prices.diesel);
+    const bestStationId = deDiesel.length ? deDiesel[0].f.stationId : null;
+    const avgDiesel = deDiesel.length ? deDiesel.reduce((s, r) => s + r.prices.diesel, 0) / deDiesel.length : null;
 
-/** Anzeigezeile für einen Tankstellen-Favoriten (DE live via Tankerkönig, CZ manuell). */
-async function favoritePriceLine(f) {
-  if (f.country === "DE") {
-    const r = await window.FuelProviderDE.getPrices([f.stationId]);
-    const p = r.prices?.[f.stationId];
-    return p ? `E10 ${fmtPriceEUR(p.e10)} · E5 ${fmtPriceEUR(p.e5)} · Diesel ${fmtPriceEUR(p.diesel)}` : (r.reason || "Preise nicht verfügbar");
-  }
-  const r = await window.FuelProviderCZ.getPrices(f.id);
-  return r.available ? formatCzPrices(r.prices) : (r.reason || "Preise nicht verfügbar");
-}
+    const trend = avgDiesel !== null
+      ? `<div class="hero-callout off" style="margin:0 0 12px;">⛽ Bestpreis bei deinen Favoriten: <strong>${esc(fmtPriceEUR(deDiesel[0].prices.diesel))}</strong> · Schnitt ${esc(fmtPriceEUR(avgDiesel))}</div>`
+      : "";
 
-function formatCzPrices(prices) {
-  if (!prices) return "keine Preise hinterlegt";
-  const parts = [];
-  if (prices.natural95) parts.push(`Natural 95 ${prices.natural95} Kč`);
-  if (prices.diesel) parts.push(`Diesel ${prices.diesel} Kč`);
-  return parts.join(" · ") || "keine Preise hinterlegt";
+    const fuelTitle = document.getElementById("dash-fuel-title");
+    if (fuelTitle) fuelTitle.textContent = favs.length === 1 ? "MEINE TANKSTELLE" : `MEINE TANKSTELLEN (${favs.length})`;
+    favEl.innerHTML = trend + rows.map(({ f, prices }) => fuelCardHtml(f, prices, bestStationId)).join("");
+    favEl.querySelectorAll("[data-go]").forEach((el) => el.addEventListener("click", () => showView("fuel")));
+  }
 }
 
 /* --------------------------------------------------------------------
@@ -993,6 +1188,7 @@ async function init() {
   initFuelModeSegments();
   initSettingsForm();
   registerServiceWorker();
+  setInterval(updateCockpitClock, 30000);
 
   await renderDashboard();
   await renderRoutes();

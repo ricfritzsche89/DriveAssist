@@ -311,4 +311,264 @@ nav.tabbar button.active svg { filter: drop-shadow(0 0 6px var(--accent-dim)); }
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ---------- Dashboard v2 (Cockpit) ---------- */
+.dash-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 4px 2px 2px;
+  gap: 10px;
+}
+.dash-head-left { min-width: 0; }
+.dash-time {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.72rem; color: var(--text-low);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.dash-greeting {
+  font-size: 1.35rem; font-weight: 700; margin: 3px 0 0;
+  color: var(--text-hi);
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+.chip-live {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.68rem; font-weight: 600;
+  color: var(--status-free);
+  background: rgba(46, 213, 138, 0.12);
+  border: 1px solid rgba(46, 213, 138, 0.25);
+  padding: 4px 10px; border-radius: 100px;
+  flex: none; letter-spacing: 0.06em;
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--status-free);
+  box-shadow: 0 0 8px var(--status-free);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.chip-warn {
+  font-size: 0.66rem; font-weight: 700;
+  color: var(--status-hindered);
+  background: rgba(240, 146, 58, 0.14);
+  padding: 3px 9px; border-radius: 100px;
+  letter-spacing: 0.06em;
+}
+
+.hero-v2 {
+  border-radius: var(--radius-l);
+  background: linear-gradient(165deg, var(--bg-1), var(--bg-0));
+  border: 1px solid var(--line);
+  padding: 18px;
+  margin: 10px 0 18px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-v2::before {
+  content: "";
+  position: absolute; inset-inline: 0; top: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(46, 213, 138, 0.45), transparent);
+}
+.hero-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+}
+.hero-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 10px; flex: none;
+  background: var(--bg-2); border: 1px solid var(--line);
+  font-size: 1.1rem;
+}
+.hero-titles { min-width: 0; display: flex; flex-direction: column; }
+.hero-kicker {
+  font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-low); font-weight: 600;
+}
+.hero-title {
+  font-size: 1.02rem; font-weight: 600; color: var(--text-hi);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-family: var(--font-display);
+}
+.hero-badge {
+  margin-left: auto; flex: none;
+  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--text-mid);
+  background: var(--bg-2); border: 1px solid var(--line);
+  padding: 3px 8px; border-radius: 8px;
+}
+.hero-status {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-size: 1.08rem; font-weight: 600;
+  padding: 6px 4px 0;
+}
+.hero-status .dot { width: 12px; height: 12px; }
+.hero-detail {
+  color: var(--text-mid); font-size: 0.84rem;
+  margin-top: 4px; line-height: 1.45;
+}
+.hero-callout {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin-top: 12px;
+  background: rgba(240, 146, 58, 0.12);
+  border: 1px solid rgba(240, 146, 58, 0.3);
+  color: var(--status-hindered);
+  border-radius: var(--radius-s);
+  padding: 9px 11px;
+  font-size: 0.78rem; font-weight: 500; line-height: 1.4;
+}
+.hero-callout.off {
+  background: rgba(46, 213, 138, 0.1);
+  border-color: rgba(46, 213, 138, 0.25);
+  color: var(--status-free);
+}
+
+.telemetry {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 14px 0;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 12px 6px;
+}
+.metric { text-align: center; }
+.metric + .metric { border-left: 1px solid var(--line); }
+.metric-label {
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-low);
+}
+.metric-value {
+  display: block; margin-top: 2px;
+  font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;
+  color: var(--text-hi); line-height: 1.1;
+}
+.metric.inv .metric-value { color: var(--accent); }
+.metric.warn .metric-value { color: var(--status-hindered); }
+.metric-sub { font-size: 0.68rem; color: var(--text-low); margin-top: 2px; display: block; }
+.hero-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.hero-actions .btn { text-align: center; font-family: var(--font-display); }
+.hero-actions .btn.ghost { color: var(--accent); }
+
+/* Incident cards (Dashboard) */
+.incident-card {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--bg-1); border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 12px 13px;
+}
+.incident-card + .incident-card { margin-top: 8px; }
+.incident-ico {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 8px; flex: none;
+  margin-top: 1px; font-size: 0.9rem;
+}
+.incident-ico.notice { background: rgba(232, 201, 75, 0.15); }
+.incident-ico.hindered { background: rgba(240, 146, 58, 0.15); }
+.incident-ico.closed { background: rgba(239, 75, 95, 0.18); }
+.incident-ico.free { background: rgba(46, 213, 138, 0.12); }
+.incident-body { min-width: 0; flex: 1; }
+.incident-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.incident-title {
+  font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--status-hindered);
+}
+.incident-head.closed .incident-title { color: var(--status-closed); }
+.incident-head.notice .incident-title { color: var(--status-notice); }
+.incident-time { font-size: 0.66rem; color: var(--text-low); flex: none; }
+.incident-sub { font-size: 0.78rem; color: var(--text-mid); margin-top: 3px; line-height: 1.45; }
+.incident-meta { font-size: 0.68rem; color: var(--text-low); margin-top: 4px; }
+
+/* Verkehrsfluss-Bar */
+.flow-card {
+  border-radius: var(--radius-m);
+  background: var(--bg-1); border: 1px solid var(--line);
+  padding: 14px;
+}
+.flow-bar {
+  position: relative; height: 14px;
+  border-radius: 100px;
+  background: linear-gradient(90deg, rgba(46,213,138,0.6), rgba(46,213,138,0.35));
+  border: 1px solid var(--line);
+  overflow: visible;
+}
+.flow-seg {
+  position: absolute; top: -2px; bottom: -2px;
+  border-radius: 6px;
+}
+.flow-seg.notice { background: var(--status-notice); }
+.flow-seg.hindered { background: var(--status-hindered); }
+.flow-seg.closed { background: var(--status-closed); }
+.flow-pos {
+  position: absolute; top: -4px; left: 2%;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--primary, var(--accent));
+  border: 2px solid var(--bg-0);
+  box-shadow: 0 0 10px var(--accent);
+}
+.flow-labels {
+  display: flex; justify-content: space-between;
+  font-size: 0.68rem; color: var(--text-low); margin-top: 8px; gap: 8px;
+}
+.flow-labels .flow-end { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flow-labels .flow-start { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flow-legend {
+  display: flex; flex-wrap: wrap; gap: 8px 12px;
+  margin-top: 10px; font-size: 0.66rem; color: var(--text-low);
+}
+.flow-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.flow-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.flow-legend .notice { background: var(--status-notice); }
+.flow-legend .hindered { background: var(--status-hindered); }
+.flow-legend .closed { background: var(--status-closed); }
+.flow-legend .free { background: var(--status-free); }
+.flow-empty { font-size: 0.78rem; color: var(--text-low); margin-top: 8px; }
+
+/* Tankstellen-Karten */
+.fuel-card {
+  background: var(--bg-1); border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 14px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.02);
+}
+.fuel-card + .fuel-card { margin-top: 10px; }
+.fuel-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.fuel-card-name { font-size: 0.95rem; font-weight: 600; font-family: var(--font-display); }
+.fuel-card-badges { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+.pf-badge {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 100px;
+}
+.pf-badge.best { background: rgba(46,213,138,0.15); color: var(--status-free); }
+.pf-badge.live { background: rgba(46,213,138,0.1); color: var(--status-free); }
+.pf-badge.manual { background: var(--bg-2); color: var(--text-mid); border: 1px solid var(--line); }
+.fuel-card-sub { font-size: 0.7rem; color: var(--text-low); margin-top: 2px; }
+.fuel-card-cta { flex: none; margin-top: 2px; }
+.price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.price-cell {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--radius-s); padding: 8px 10px;
+}
+.price-label { font-size: 0.68rem; color: var(--text-low); text-transform: uppercase; letter-spacing: 0.04em; }
+.price-val { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--text-hi); white-space: nowrap; }
+.price-cell.best .price-val { color: var(--status-free); }
+
+/* Schnellzugriff */
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quick-item {
+  display: flex; flex-direction: column; gap: 2px;
+  text-align: left;
+  background: var(--bg-1); border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 14px;
+  cursor: pointer;
+  min-height: 84px;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.quick-item:hover { background: var(--bg-2); }
+.quick-item:active { transform: scale(0.98); }
+.quick-ico { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; }
+.quick-title { font-size: 0.82rem; font-weight: 600; color: var(--text-hi); font-family: var(--font-display); }
+.quick-sub { font-size: 0.66rem; color: var(--text-low); }
+
 ::-webkit-scrollbar { width: 0; height: 0; }

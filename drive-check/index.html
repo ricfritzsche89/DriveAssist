@@ -27,34 +27,71 @@
 
   <!-- ============ DASHBOARD ============ -->
   <main class="view" id="view-dashboard">
+    <!-- Welcome & Live-Badge -->
+    <section class="dash-head">
+      <div class="dash-head-left">
+        <div class="dash-time"><span>📅</span><span id="cockpit-live-timestamp">—</span></div>
+        <h2 class="dash-greeting" id="dash-greeting">Dashboard</h2>
+      </div>
+      <span class="chip-live"><span class="live-dot"></span>LIVE</span>
+    </section>
+
+    <!-- Live Commute Primary Turn & Status Card -->
     <div id="dashboard-hero"></div>
 
-    <div class="section">
+    <!-- Live Disruption / Incident Warnings -->
+    <section class="section" id="dash-disruptions-wrap" hidden>
       <div class="section-head">
-        <h2>MEINE STRECKEN</h2>
-        <a class="link" href="#routes" onclick="showView('routes')">Alle</a>
+        <h2 id="dash-disruptions-title">STRECKENMELDUNGEN</h2>
+        <span class="chip-warn" id="dash-disruptions-chip">AKTIV</span>
       </div>
-      <div id="dashboard-routes"></div>
-    </div>
+      <div id="dashboard-traffic-events"></div>
+    </section>
 
-    <div class="section">
+    <!-- Verkehrsfluss & Tempo -->
+    <section class="section">
       <div class="section-head">
-        <h2>VERKEHR</h2>
-        <a class="link" href="#map" onclick="showView('map')">Karte</a>
+        <h2>VERKEHRSFLUSS &amp; TEMPO</h2>
+        <span class="chip-live">Echtzeit-Telemetrie</span>
       </div>
-      <p style="color:var(--text-low);font-size:0.75rem;">
-        Deutschland: Autobahn GmbH API (live). Tschechien: aktuell keine Live-Quelle verfügbar (siehe Einstellungen → Über).
-      </p>
-      <div id="dashboard-traffic-events" style="margin-top:8px;"></div>
-    </div>
+      <div id="dash-flow"></div>
+    </section>
 
-    <div class="section">
+    <!-- Tanken -->
+    <section class="section">
       <div class="section-head">
-        <h2>TANKEN</h2>
+        <h2 id="dash-fuel-title">MEINE TANKSTELLEN</h2>
         <a class="link" href="#fuel" onclick="showView('fuel')">Alle</a>
       </div>
       <div id="dashboard-fuel-favs"></div>
-    </div>
+    </section>
+
+    <!-- Cockpit Quick Access Shortcuts -->
+    <section class="section">
+      <div class="section-head"><h2>SCHNELLZUGRIFF</h2></div>
+      <div class="quick-grid">
+        <button class="quick-item" data-go="routes">
+          <span class="quick-ico">🧭</span>
+          <span class="quick-title">Routen-Check</span>
+          <span class="quick-sub">Stau &amp; Baustellen</span>
+        </button>
+        <button class="quick-item" data-go="map">
+          <span class="quick-ico">🗺️</span>
+          <span class="quick-title">Karte</span>
+          <span class="quick-sub">Strecken &amp; Standort</span>
+        </button>
+        <button class="quick-item" data-go="fuel">
+          <span class="quick-ico">⛽</span>
+          <span class="quick-title">Tanken</span>
+          <span class="quick-sub">Preise &amp; Favoriten</span>
+        </button>
+        <button class="quick-item" data-go="settings">
+          <span class="quick-ico">⚙️</span>
+          <span class="quick-title">Mehr</span>
+          <span class="quick-sub">Einheiten &amp; Backup</span>
+        </button>
+      </div>
+    </section>
   </main>
 
   <!-- ============ MEINE STRECKEN ============ -->
@@ -207,7 +244,7 @@
         ⛽ Tanken DE: Tankerkönig / MTS-K (eigener kostenloser API-Key nötig)<br>
         ⛽ Tanken CZ: keine verifizierte freie API gefunden — manuelle Erfassung<br>
         🗺️ Karte/Routing: OpenStreetMap, Nominatim, OSRM (alle frei)<br><br>
-        Version 1.2 · Tanken-Ranking mit Diesel/Benzin-Umschalter & Live-Preisen.
+        Version 1.3 · Neues Cockpit-Dashboard mit Live-Verkehr, Ankunftszeit &amp; Bestpreis-Trend.
       </p>
     </div>
   </main>
