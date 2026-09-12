@@ -192,6 +192,79 @@ input:focus, select:focus, button:focus-visible, .btn:focus-visible {
   outline-offset: 1px;
 }
 
+/* ---------- Tankstellen-Ranking ---------- */
+.fuel-seg {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 4px;
+}
+.fuel-seg button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  border-radius: calc(var(--radius-s) - 3px);
+  color: var(--text-low);
+  font-size: 0.85rem;
+  font-family: var(--font-display);
+  cursor: pointer;
+}
+.fuel-seg button.active {
+  background: var(--bg-1);
+  color: var(--accent);
+  font-weight: 700;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.fuel-list { display: flex; flex-direction: column; gap: 8px; }
+.fuel-tile {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 13px 14px;
+  position: relative;
+}
+.fuel-tile .dot { width: 9px; height: 9px; }
+.fuel-info { flex: 1; min-width: 0; }
+.fuel-name { font-size: 0.9rem; font-weight: 500; }
+.fuel-meta { font-size: 0.75rem; color: var(--text-low); margin-top: 2px; }
+.fuel-adds {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 8px;
+}
+.fuel-note { font-size: 0.7rem; color: var(--text-low); }
+.fuel-live { font-size: 0.7rem; color: var(--status-free); }
+.fuel-time { font-size: 0.7rem; color: var(--text-low); }
+.fuel-mini {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text-mid);
+  border-radius: var(--radius-s);
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.fuel-mini.danger { color: var(--status-closed); border-color: rgba(239,75,95,0.4); }
+.fuel-price {
+  margin-left: auto;
+  text-align: right;
+  flex: none;
+  min-width: 86px;
+}
+.fuel-num {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  line-height: 1;
+  font-weight: 700;
+}
+.fuel-num small { font-size: 0.8rem; color: var(--text-mid); font-weight: 500; }
+.fuel-num.muted { color: var(--text-low); }
+.fuel-sub { font-size: 0.7rem; color: var(--text-low); margin-top: 3px; }
+
 /* ---------- Leerzustand ---------- */
 .empty-state {
   text-align: center;

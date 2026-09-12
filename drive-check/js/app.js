@@ -586,43 +586,168 @@ function initGeolocateButton() {
 async function renderFuelView() {
   const favs = await DriveCheckDB.getAll(DriveCheckDB.STORES.fuelFavorites);
   const listEl = document.getElementById("fuel-favorites-list");
+  const segEl = document.getElementById("fuel-mode");
+  const mode = (await DriveCheckDB.getSetting("fuelViewMode", "diesel")) === "benzin" ? "benzin" : "diesel";
+  segEl?.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+
   if (!favs.length) {
     listEl.innerHTML = `<div class="empty-state"><p>Noch keine Favoriten. Suche unten eine Tankstelle oder lege einen CZ-Favoriten manuell an.</p></div>`;
-  } else {
-    const rows = await Promise.all(favs.map(async (f) => {
-      const priceText = await favoritePriceLine(f);
-      const editBtn = f.country === "CZ"
-        ? `<button class="btn ghost" data-czedit="${esc(f.id)}" style="padding:6px 10px;width:auto;font-size:0.72rem;">Preise</button>`
-        : "";
-      return `
-      <div class="row-card">
-        <span class="dot ${f.country === 'DE' ? 'free' : 'unknown'}"></span>
-        <div>
-          <div class="rc-title">${f.country === "CZ" ? "🇨🇿" : "🇩🇪"} ${esc(f.label)}</div>
-          <div class="rc-sub">${esc(priceText)}</div>
-        </div>
-        <div class="rc-value" style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
-          ${editBtn}
-          <button class="btn danger" data-favdel="${esc(f.id)}" style="padding:6px 10px;width:auto;font-size:0.72rem;">Entfernen</button>
-        </div>
-      </div>`;
-    }));
-    listEl.innerHTML = `<div class="card-list">${rows.join("")}</div>`;
-    listEl.querySelectorAll("[data-favdel]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        await DriveCheckDB.delete(DriveCheckDB.STORES.fuelFavorites, btn.dataset.favdel);
-        toast("Favorit entfernt");
-        renderFuelView();
-        renderDashboard();
-      });
-    });
-    listEl.querySelectorAll("[data-czedit]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const fav = favs.find((f) => f.id === btn.dataset.czedit);
-        if (fav) editCzFavorite(fav);
-      });
-    });
+    return;
   }
+
+  const rate = await getEurCzkRate();
+  const tiles = (await Promise.all(favs.map(async (f) => {
+    const row = await loadFuelFavData(f);
+    const isCz = f.country === "CZ";
+    const primaryKey = isCz ? (mode === "benzin" ? "natural95" : "diesel") : (mode === "benzin" ? "e5" : "diesel");
+    const primary = Number.isFinite(row.prices?.[primaryKey]) ? row.prices[primaryKey] : null;
+    return {
+      f, row, isCz, mode,
+      primary,
+      primaryEur: isCz && primary != null && rate ? primary / rate : null,
+      hasMissing: !row.source || (primary == null),
+    };
+  }))).sort((a, b) => (a.primary ?? Infinity) - (b.primary ?? Infinity));
+
+  listEl.innerHTML = `<div class="fuel-list">${tiles.map(fuelTileHtml).join("")}</div>`;
+
+  listEl.querySelectorAll("[data-favdel]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await DriveCheckDB.delete(DriveCheckDB.STORES.fuelFavorites, btn.dataset.favdel);
+      toast("Favorit entfernt");
+      renderFuelView();
+      renderDashboard();
+    });
+  });
+  listEl.querySelectorAll("[data-czedit]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const fav = favs.find((f) => f.id === btn.dataset.czedit);
+      if (fav) editCzFavorite(fav);
+    });
+  });
+}
+
+function fuelTileHtml(t) {
+  const { f, row, isCz, primary, primaryEur, hasMissing } = t;
+  const fuelLabel = isCz
+    ? { natural95: "Natural 95", diesel: "Diesel" }
+    : { e5: "E5", e10: "E10", diesel: "Diesel" };
+  const unit = isCz ? "Kč" : "€";
+  const metaParts = [];
+  if (isCz) {
+    if (Number.isFinite(row.prices?.natural95)) metaParts.push(`${fuelLabel.natural95} ${fmtPricePlain(row.prices.natural95)} Kč`);
+    if (Number.isFinite(row.prices?.diesel)) metaParts.push(`${fuelLabel.diesel} ${fmtPricePlain(row.prices.diesel)} Kč`);
+  } else {
+    if (Number.isFinite(row.prices?.e5)) metaParts.push(`${fuelLabel.e5} ${fmtPricePlain(row.prices.e5)} €`);
+    if (Number.isFinite(row.prices?.e10)) metaParts.push(`${fuelLabel.e10} ${fmtPricePlain(row.prices.e10)} €`);
+    if (Number.isFinite(row.prices?.diesel)) metaParts.push(`${fuelLabel.diesel} ${fmtPricePlain(row.prices.diesel)} €`);
+  }
+
+  const editBtn = isCz
+    ? `<button class="fuel-mini" data-czedit="${esc(f.id)}">Preise eintragen</button>`
+    : "";
+  const missingNote = hasMissing
+    ? (isCz ? "Manuell pflegen" : "Preise derzeit nicht verfügbar")
+    : (row.source === "manuell" ? "Manuell gepflegt" : "");
+
+  return `
+    <div class="fuel-tile">
+      <span class="dot ${f.country === 'DE' ? 'free' : 'unknown'}"></span>
+      <div class="fuel-info">
+        <div class="fuel-name">${f.country === "CZ" ? "🇨🇿" : "🇩🇪"} ${esc(f.label)}</div>
+        <div class="fuel-meta">${metaParts.length ? esc(metaParts.join(" · ")) : "–"}</div>
+        <div class="fuel-adds">
+          ${missingNote ? `<span class="fuel-note">${esc(missingNote)}</span>` : `<span class="fuel-live">Live</span>`}
+          ${row.freshness ? `<span class="fuel-time">vor ${esc(row.freshness)}</span>` : ""}
+          <span style="flex:1"></span>
+          ${editBtn}
+          <button class="fuel-mini danger" data-favdel="${esc(f.id)}">×</button>
+        </div>
+      </div>
+      <div class="fuel-price">
+        ${hasMissing
+          ? `<div class="fuel-num muted">–</div><div class="fuel-sub">kein Preis</div>`
+          : `<div class="fuel-num">${fmtPricePlain(primary)}<small> ${unit}</small></div>${primaryEur ? `<div class="fuel-sub">≈ ${fmtPriceEUR(primaryEur)}</div>` : ""}`}
+      </div>
+    </div>`;
+}
+
+function fmtPricePlain(v) {
+  if (!Number.isFinite(v)) return "–";
+  return v.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function fmtRelative(ts) {
+  const ms = Date.now() - (new Date(ts).getTime() || 0);
+  if (!Number.isFinite(ms) || ms <= 0) return "";
+  const min = Math.floor(ms / 60000);
+  if (min < 1) return "gerade eben";
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} h`;
+  return new Date(ts).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+}
+
+/** Strukturierte Preis-Daten für einen Favoriten (DE live, CZ manuell + Freshness). */
+async function loadFuelFavData(f) {
+  let prices = null;
+  let source = null;
+  let freshness = "";
+  if (f.country === "DE") {
+    const r = await window.FuelProviderDE.getPrices([f.stationId]);
+    const p = r.prices?.[f.stationId];
+    if (p) {
+      prices = { e5: p.e5, e10: p.e10, diesel: p.diesel };
+      source = "live";
+      if (p.lastUpdated) freshness = fmtRelative(p.lastUpdated);
+    }
+  } else {
+    const r = await window.FuelProviderCZ.getPrices(f.id);
+    if (r.available) {
+      prices = { natural95: r.prices?.natural95 ?? null, diesel: r.prices?.diesel ?? null };
+      source = "manuell";
+      if (f.lastUpdated) freshness = fmtRelative(f.lastUpdated);
+    }
+  }
+  return { f, prices, source, freshness };
+}
+
+/** Wechselkurs EUR→CZK (kostenloser ECB-Dienst via frankfurter.app, ohne Key, mit CORS). */
+async function getEurCzkRate() {
+  const CACHE_MS = 6 * 3600 * 1000;
+  const cached = window.DriveCheckDB
+    ? await window.DriveCheckDB.get(window.DriveCheckDB.STORES.trafficCache, "fx_eur_czk")
+    : null;
+  if (cached && Date.now() - new Date(cached.lastUpdated).getTime() < CACHE_MS && Number.isFinite(cached.rate)) {
+    return cached.rate;
+  }
+  try {
+    const res = await fetch("https://api.frankfurter.app/latest?base=EUR&symbols=CZK");
+    if (res.ok) {
+      const j = await res.json();
+      const rate = Number(j.rates?.CZK);
+      if (Number.isFinite(rate)) {
+        if (window.DriveCheckDB) {
+          await window.DriveCheckDB.put(window.DriveCheckDB.STORES.trafficCache, {
+            id: "fx_eur_czk",
+            rate,
+            lastUpdated: new Date().toISOString(),
+          });
+        }
+        return rate;
+      }
+    }
+  } catch { /* offline */ }
+  return cached && Number.isFinite(cached.rate) ? cached.rate : null;
+}
+
+function initFuelModeSegments() {
+  document.getElementById("fuel-mode")?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-mode]");
+    if (!btn) return;
+    await DriveCheckDB.setSetting("fuelViewMode", btn.dataset.mode);
+    renderFuelView();
+  });
 }
 
 function editCzFavorite(fav) {
@@ -695,6 +820,7 @@ function initFuelFormCZ() {
           ...existing,
           label,
           manualPrices: { natural95, diesel },
+          lastUpdated: new Date().toISOString(),
         });
         toast("CZ-Favorit aktualisiert");
       } else {
@@ -704,6 +830,7 @@ function initFuelFormCZ() {
           label,
           manualPrices: { natural95, diesel },
           createdAt: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
         });
         toast("CZ-Favorit gespeichert");
       }
@@ -714,6 +841,7 @@ function initFuelFormCZ() {
         label,
         manualPrices: { natural95, diesel },
         createdAt: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
       });
       toast("CZ-Favorit gespeichert");
     }
@@ -862,6 +990,7 @@ async function init() {
   initGeolocateButton();
   initFuelSearchDE();
   initFuelFormCZ();
+  initFuelModeSegments();
   initSettingsForm();
   registerServiceWorker();
 

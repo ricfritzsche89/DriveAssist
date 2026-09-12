@@ -269,3 +269,13 @@ Live-Daten fälschlich als aktuell ausgegeben werden.
   Fuelo.net-API sendet keine CORS-Header, ein direkter Browserabruf ohne eigenen
   Server ist daher nicht möglich. Das Dashboard zeigt in so einem Fall klar den
   Pflege-Hinweis statt Live-Daten vorzutäuschen.
+
+**v1.2 (Tanken-Ranking)**
+- **Diesel/Benzin-Umschalter**: In der Tanken-Ansicht wählst du per Segment die
+  Kraftstoffart; die Favoritenliste stellt sich um (Diesel / E5, CZ: Natural 95).
+- **Günstigste zuerst**: Die Favoriten werden nach dem Preis des gewählten
+  Kraftstoffs sortiert — die günstigste Tankstelle steht oben, große Preis-Ziffer
+  rechts, Euro-Angabe (CZ) darunter.
+- **Kompaktere Karten**: Name, Live-Preise aller Kraftstoffe und Pflege-/Live-
+  Status in einer aufgeräumten Zeile; die Auswahl bleibt über die
+  App-Neustarteinstellung hinweg erhalten.

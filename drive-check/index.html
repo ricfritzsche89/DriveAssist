@@ -112,8 +112,12 @@
   <!-- ============ TANKSTELLEN ============ -->
   <main class="view" id="view-fuel" hidden>
     <div class="section">
-      <div class="section-head"><h2>MEINE FAVORITEN</h2></div>
-      <div id="fuel-favorites-list"></div>
+      <div class="section-head"><h2>MEIN TANKSTOFF</h2></div>
+      <div class="fuel-seg" id="fuel-mode" role="tablist">
+        <button type="button" data-mode="diesel" class="active">Diesel</button>
+        <button type="button" data-mode="benzin">Benzin</button>
+      </div>
+      <div id="fuel-favorites-list" style="margin-top:10px;"></div>
     </div>
 
     <div class="section">
@@ -203,7 +207,7 @@
         ⛽ Tanken DE: Tankerkönig / MTS-K (eigener kostenloser API-Key nötig)<br>
         ⛽ Tanken CZ: keine verifizierte freie API gefunden — manuelle Erfassung<br>
         🗺️ Karte/Routing: OpenStreetMap, Nominatim, OSRM (alle frei)<br><br>
-        Version 1.1 · alle 12 Phasen umgesetzt.
+        Version 1.2 · Tanken-Ranking mit Diesel/Benzin-Umschalter & Live-Preisen.
       </p>
     </div>
   </main>
