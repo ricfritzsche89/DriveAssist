@@ -270,6 +270,15 @@ Live-Daten fälschlich als aktuell ausgegeben werden.
   Server ist daher nicht möglich. Das Dashboard zeigt in so einem Fall klar den
   Pflege-Hinweis statt Live-Daten vorzutäuschen.
 
+**v1.4.1 (Meldungs-Details pro Strecke)**
+- **Antippbare Streckenmeldungen:** Die Meldungszeile auf einer Streckenkarte im
+  Dashboard ist jetzt ein Button; auch Warnungen öffnen per „Details“ eine
+  eigene Ansicht pro Strecke.
+- **Detail-Ansicht `#view-detail`:** Kopf mit Status-Icon, Streckenname, Start/Ziel
+  und Gesamtstatus (Status-Chip), Gesamtstatus-Grund sowie alle Incident-Karten
+  (Titel, „vor X min“, Schweregrad-Icon, Beschreibung, Abstand zur Route, Dauer).
+  „Zurück“ führt in die Ansicht zurück, aus der man gekommen ist.
+
 **v1.4 (Kompakt-Dashboard: Strecke + Bestpreis-Tankstelle)**
 - **Weiterentwickeltes Dashboard nach neuem Design-Preview:** Jede gespeicherte
   Strecke erscheint als kompakte Karte mit zwei Spalten — links die **Strecke

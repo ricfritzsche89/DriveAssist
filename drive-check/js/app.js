@@ -3,7 +3,7 @@
  * Orchestriert Router, Views und alle Provider (Phase 2–12 zusammengeführt).
  */
 
-const VIEWS = ["dashboard", "routes", "map", "fuel", "settings", "warnungen"];
+const VIEWS = ["dashboard", "routes", "map", "fuel", "settings", "warnungen", "detail"];
 
 const STATUS_LABEL = {
   free: "STRECKE FREI",
@@ -60,6 +60,7 @@ function showView(name) {
   if (name === "fuel") renderFuelView();
   if (name === "settings") renderSettings();
   if (name === "warnungen") renderWarnings();
+  if (name === "detail") renderWarnDetail();
 }
 window.showView = showView;
 
@@ -420,6 +421,8 @@ async function renderDashboard() {
   }
 
   dashboardWarnings = routes.map((r) => ({
+    routeId: r.id,
+    route: r,
     routeName: r.name,
     status: resultsByRouteId[r.id]?.status || "unknown",
     offline: resultsByRouteId[r.id]?.offline || !navigator.onLine,
@@ -486,7 +489,11 @@ async function renderDashboard() {
     let alertLine = "";
     if (result.events?.length) {
       const icons = { notice: "⚠️", hindered: "🚧", closed: "🚫" };
-      alertLine = `<span class="route-alerts">${icons[result.status] || "ℹ️"} ${result.events.length} Meldung(en) auf der Strecke</span>`;
+      alertLine = `
+        <button class="route-alerts" data-warn-detail="${esc(route.id)}">
+          <span class="material-symbols-outlined">info</span>
+          <span>${icons[result.status] || "ℹ️"} ${result.events.length} Meldung(en) auf der Strecke · Details</span>
+        </button>`;
     }
     return `
       <div class="pair-card">
@@ -517,6 +524,9 @@ async function renderDashboard() {
 
   listEl.querySelectorAll("[data-go-fuel]").forEach((el) =>
     el.addEventListener("click", (e) => { e.preventDefault(); showView("fuel"); })
+  );
+  listEl.querySelectorAll("[data-warn-detail]").forEach((el) =>
+    el.addEventListener("click", () => openWarnDetail(el.dataset.warnDetail, "dashboard"))
   );
 }
 
@@ -623,11 +633,77 @@ function renderWarnings() {
         <div class="warning-head">
           <span class="status-chip ${chip.cls}">${chip.text}</span>
           <span class="warning-route">${esc(w.routeName)}</span>
+          <button class="warning-detail" data-warn-open="${esc(w.routeId)}">
+            <span>Details</span><span class="material-symbols-outlined">chevron_right</span>
+          </button>
         </div>
         <div class="warning-reason">${esc(w.reason)}</div>
         ${w.events?.length ? `<div class="warning-events">${w.events.map(incidentCardHtml).join("")}</div>` : ""}
       </div>`;
   }).join("");
+
+  listEl.querySelectorAll("[data-warn-open]").forEach((el) =>
+    el.addEventListener("click", () => openWarnDetail(el.dataset.warnOpen, "warnungen"))
+  );
+}
+
+/* --------------------------------------------------------------------
+ * Warnungs-Detail-View (v1.4.1)
+ * -------------------------------------------------------------------- */
+let warnDetailId = null;
+let warnDetailBack = "dashboard";
+
+function openWarnDetail(routeId, backView) {
+  warnDetailId = routeId || null;
+  warnDetailBack = backView || "dashboard";
+  showView("detail");
+}
+
+function renderWarnDetail() {
+  const headEl = document.getElementById("detail-header");
+  const listEl = document.getElementById("detail-list");
+  const backEl = document.getElementById("detail-back");
+  if (backEl) backEl.addEventListener("click", () => showView(warnDetailBack));
+
+  const w = dashboardWarnings.find((x) => x.routeId === warnDetailId);
+  if (!w) {
+    if (headEl) headEl.innerHTML = "";
+    if (listEl) listEl.innerHTML = `
+      <div class="warning-empty">
+        <span class="material-symbols-outlined">search_off</span>
+        <p>Keine Details zu dieser Strecke verfügbar.</p>
+      </div>`;
+    return;
+  }
+  const chip = statusChip(w.status, w.offline);
+  const sub = w.route
+    ? `${shortLabel(w.route.startLabel)} → ${shortLabel(w.route.endLabel)}`
+    : "";
+  if (headEl) headEl.innerHTML = `
+    <div class="detail-head">
+      <span class="detail-ico material-symbols-outlined ${chip.cls}">${chip.icon}</span>
+      <div class="detail-titles">
+        <span class="detail-name">${esc(w.routeName)}</span>
+        <span class="detail-sub">${esc(sub)}</span>
+      </div>
+      <span class="status-chip ${chip.cls}">${chip.text}</span>
+    </div>
+    <div class="detail-reason">${esc(w.reason)}</div>`;
+
+  if (listEl) {
+    if (!w.events?.length) {
+      listEl.innerHTML = `
+        <div class="warning-empty">
+          <span class="material-symbols-outlined">verified_user</span>
+          <p>Auf dieser Strecke liegen aktuell keine Meldungen vor.</p>
+        </div>`;
+    } else {
+      const total = w.events.length;
+      listEl.innerHTML = `
+        <div class="detail-count">${total} ${total === 1 ? "STRECKENMELDUNG" : "STRECKENMELDUNGEN"}</div>
+        ${w.events.map(incidentCardHtml).join("")}`;
+    }
+  }
 }
 
 /* --------------------------------------------------------------------

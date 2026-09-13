@@ -69,6 +69,18 @@
     <p class="hint">Meldungen auf deinen gespeicherten Strecken (Autobahn GmbH API, live). Tschechien liefert aktuell keine freie Live-Quelle.</p>
   </main>
 
+  <!-- ============ MELDUNGS-DETAILS ============ -->
+  <main class="view" id="view-detail" hidden>
+    <div class="detail-top">
+      <button class="icon-btn" id="detail-back" aria-label="Zurück">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <h2>STRECKENMELDUNGEN</h2>
+    </div>
+    <div id="detail-header"></div>
+    <div id="detail-list" style="margin-top:12px;"></div>
+  </main>
+
   <!-- ============ MEINE STRECKEN ============ -->
   <main class="view" id="view-routes" hidden>
     <div class="section">
@@ -219,7 +231,7 @@
         ⛽ Tanken DE: Tankerkönig / MTS-K (eigener kostenloser API-Key nötig)<br>
         ⛽ Tanken CZ: keine verifizierte freie API gefunden — manuelle Erfassung<br>
         🗺️ Karte/Routing: OpenStreetMap, Nominatim, OSRM (alle frei)<br><br>
-        Version 1.4 · Kompakt-Dashboard: Strecken mit Status direkt neben der günstigsten Tankstelle.
+        Version 1.4.1 · Streckenmeldungen antippbar – Detail-Ansicht pro Strecke.
       </p>
     </div>
   </main>

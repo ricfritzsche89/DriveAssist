@@ -7,7 +7,7 @@
  * damit nie veraltete Live-Daten fälschlich als aktuell angezeigt werden
  * (Abschnitt 20).
  */
-const CACHE_VERSION = "drive-check-v8";
+const CACHE_VERSION = "drive-check-v9";
 const APP_SHELL = [
   "./",
   "./index.html",
