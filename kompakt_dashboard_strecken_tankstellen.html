@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="de"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-highest": "#2f3543",
+            "on-tertiary": "#003918",
+            "primary-fixed": "#9cf0ff",
+            "primary-fixed-dim": "#00daf3",
+            "tertiary-container": "#22ef7e",
+            "secondary-fixed-dim": "#ffb778",
+            "error-container": "#93000a",
+            "tertiary": "#b1ffbf",
+            "on-tertiary-fixed-variant": "#005226",
+            "primary": "#c3f5ff",
+            "on-tertiary-fixed": "#00210b",
+            "inverse-primary": "#006875",
+            "on-primary-fixed-variant": "#004f58",
+            "surface-dim": "#0d1320",
+            "primary-container": "#00e5ff",
+            "on-background": "#dde2f5",
+            "surface-variant": "#2f3543",
+            "background": "#0d1320",
+            "on-error-container": "#ffdad6",
+            "secondary-fixed": "#ffdcc1",
+            "secondary-container": "#fd9000",
+            "surface-tint": "#00daf3",
+            "on-surface": "#dde2f5",
+            "on-primary-fixed": "#001f24",
+            "outline-variant": "#3b494c",
+            "on-error": "#690005",
+            "on-secondary-fixed": "#2e1500",
+            "surface-container": "#1a1f2d",
+            "on-surface-variant": "#bac9cc",
+            "on-primary": "#00363d",
+            "inverse-surface": "#dde2f5",
+            "error": "#ffb4ab",
+            "surface-bright": "#333948",
+            "tertiary-fixed": "#62ff96",
+            "tertiary-fixed-dim": "#00e475",
+            "secondary": "#ffb778",
+            "on-primary-container": "#00626e",
+            "on-tertiary-container": "#006731",
+            "on-secondary": "#4c2700",
+            "inverse-on-surface": "#2a303f",
+            "outline": "#849396",
+            "on-secondary-container": "#613400",
+            "surface-container-low": "#161b29",
+            "surface-container-high": "#242a38",
+            "surface": "#0d1320",
+            "on-secondary-fixed-variant": "#6c3a00",
+            "surface-container-lowest": "#080e1b"
+          },
+          fontFamily: {
+            "headline-md": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "label-md": ["JetBrains Mono"],
+            "headline-xl": ["Inter"],
+            "headline-xl-mobile": ["Inter"],
+            "label-sm": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Inter"],
+            "label-lg": ["JetBrains Mono"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      html, body {
+        width: 100vw;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        background-color: #0d1320;
+        color: #dde2f5;
+      }
+      .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+      .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    }
+    ::-webkit-scrollbar { display: none; }
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface font-body-md text-body-md text-on-surface antialiased flex flex-col selection:bg-primary-container selection:text-on-primary-container">
+<!-- Header -->
+<header class="fixed top-0 w-full z-50 pt-safe bg-surface-container-lowest/90 backdrop-blur-xl border-b border-surface-container-highest/40 shadow-sm">
+<div class="h-16 px-4 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<img alt="DriveAssist App Icon Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XixcwaxwheJJBcj9KEOsPmaqbMvjLzhJyMq-AkjGTGpbbMe3CCuLIfZXXOUa-H1CfJQAMebkMElF9Cr638nH8EP-DaKBwwQeDf4KQiUjo0-16Pz0HaOXrVNY1c4e47ukzsYPadnp2Y951Za9w1A0-D18AOpDvRwb9B07YkS_VZSKO2reQ2BMBYllI6QxJ14B60Zx4aq8E58sKhfWIOvUEPhDV0JiZDt4i_YVV6onMapH_DJUWMezSqVAU"/>
+<div class="flex flex-col">
+<span class="font-label-sm text-[10px] text-primary-container uppercase tracking-widest leading-tight">CO-PILOT</span>
+<span class="font-headline-sm text-base text-on-surface font-bold tracking-tight leading-tight">Dashboard</span>
+</div>
+</div>
+<div class="flex items-center gap-2.5">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high/90">
+<span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+<span class="font-label-sm text-xs text-tertiary font-semibold tracking-wider">LIVE</span>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/60">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1NCBWKVVRS39JrXVlInCFbjvLCs4GEjISmsfYCE7iYupNsurcorliEkaAE2zV9lo3veWcOgTCyfSQs40TtN6wMlJsGi8ouXQsR7XoxKJuFNsX4Gldrzeo3sY3bZR84H4K0EKvCQz2aW9Lo0qeSkstq9_fL37nR6zUkaH_kT5rQXeOVN3aUtHpUOgSMX6vml66cCzgWZP6I4qA8TJ5O5KnlF6GjzKYg3xcuPxYh6qdK3BIRHo2-ulk3w"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col w-full pt-20 pb-24 px-4 max-w-lg mx-auto">
+<!-- Driver Greeting & Info bar -->
+<div class="flex items-baseline justify-between mb-4 pt-1">
+<div>
+<p class="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider" id="cockpit-live-timestamp">Mo, 21. Okt · 07:42 MEZ</p>
+<h1 class="font-headline-sm text-xl text-on-surface font-bold tracking-tight mt-0.5">
+          Guten Morgen, Markus
+        </h1>
+</div>
+<span class="font-label-sm text-[11px] px-2 py-0.5 rounded bg-surface-container-high text-primary font-medium">
+        3 Favoriten
+      </span>
+</div>
+<!-- Section Title & Column Legend -->
+<div class="flex items-center justify-between px-1 mb-2.5 text-on-surface-variant font-label-sm text-[11px] uppercase tracking-wider">
+<div class="flex items-center gap-1 text-on-surface font-semibold">
+<span class="material-symbols-outlined text-[15px] text-primary-container">alt_route</span>
+<span>Strecke (Status)</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface font-semibold">
+<span class="material-symbols-outlined text-[15px] text-tertiary-container">local_gas_station</span>
+<span>Günstigste Tankstelle</span>
+</div>
+</div>
+<!-- Streamlined List of Route + Gas Station Pairs -->
+<div class="flex flex-col gap-3.5">
+<!-- PAIR 1: Arbeitsweg (GELB / BAUSTELLE) + JET Tankstelle -->
+<div class="rounded-xl bg-surface-container border border-surface-container-highest/60 overflow-hidden shadow-sm">
+<div class="grid grid-cols-2 divide-x divide-surface-container-highest/50">
+<!-- Route Card (Left) -->
+<div class="p-3.5 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1.5">
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Strecke 1</span>
+<!-- Status Badge GELB -->
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-label-sm text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                  Baustelle
+                </span>
+</div>
+<h2 class="font-headline-sm text-sm font-bold text-on-surface leading-tight">
+                Arbeitsweg: Köln → DUS
+              </h2>
+<p class="font-body-sm text-xs text-amber-300/90 font-medium mt-1 leading-snug">
+                Fahrbahnverengung A46
+              </p>
+</div>
+<div class="pt-3 mt-1 border-t border-surface-container-highest/30 flex items-baseline justify-between">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Fahrzeit</span>
+<span class="font-label-md text-xs font-bold text-amber-300">48 Min (+12m)</span>
+</div>
+</div>
+<!-- Associated Gas Station (Right) -->
+<div class="p-3.5 flex flex-col justify-between bg-surface-container-low/50">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1.5">
+<span class="font-label-sm text-[10px] text-tertiary-container font-semibold uppercase tracking-wider">Auf dem Weg</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">A3 Abf. 24</span>
+</div>
+<h3 class="font-headline-sm text-sm font-bold text-on-surface leading-tight truncate">
+                JET Leverkusen
+              </h3>
+<div class="mt-1 flex items-baseline gap-1">
+<span class="font-headline-sm text-base font-bold text-tertiary tracking-tight">1,63⁹ €</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Diesel</span>
+</div>
+</div>
+<div class="pt-3 mt-1 border-t border-surface-container-highest/30 flex items-center justify-between">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Super E10</span>
+<span class="font-label-md text-xs font-semibold text-on-surface">1,71⁹ €</span>
+</div>
+</div>
+</div>
+</div>
+<!-- PAIR 2: Zu den Eltern (ROT / GESPERRT) + Aral Tankstelle -->
+<div class="rounded-xl bg-surface-container border border-surface-container-highest/60 overflow-hidden shadow-sm">
+<div class="grid grid-cols-2 divide-x divide-surface-container-highest/50">
+<!-- Route Card (Left) -->
+<div class="p-3.5 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1.5">
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Strecke 2</span>
+<!-- Status Badge ROT -->
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-label-sm text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                  Gesperrt
+                </span>
+</div>
+<h2 class="font-headline-sm text-sm font-bold text-on-surface leading-tight">
+                Eltern (A1 Leverkusen)
+              </h2>
+<p class="font-body-sm text-xs text-rose-300/90 font-medium mt-1 leading-snug">
+                Vollsperrung Kreuz Lev.
+              </p>
+</div>
+<div class="pt-3 mt-1 border-t border-surface-container-highest/30 flex items-baseline justify-between">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Fahrzeit</span>
+<span class="font-label-md text-xs font-bold text-rose-300">55 Min (+25m)</span>
+</div>
+</div>
+<!-- Associated Gas Station (Right) -->
+<div class="p-3.5 flex flex-col justify-between bg-surface-container-low/50">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1.5">
+<span class="font-label-sm text-[10px] text-primary-container font-semibold uppercase tracking-wider">24h offen</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">0,8 km</span>
+</div>
+<h3 class="font-headline-sm text-sm font-bold text-on-surface leading-tight truncate">
+                Aral Center Opladen
+              </h3>
+<div class="mt-1 flex items-baseline gap-1">
+<span class="font-headline-sm text-base font-bold text-on-surface tracking-tight">1,67⁹ €</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Diesel</span>
+</div>
+</div>
+<div class="pt-3 mt-1 border-t border-surface-container-highest/30 flex items-center justify-between">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Super E10</span>
+<span class="font-label-md text-xs font-semibold text-on-surface">1,74⁹ €</span>
+</div>
+</div>
+</div>
+</div>
+<!-- PAIR 3: Sport & Fitness (GRÜN / FREI) + TotalEnergies -->
+<div class="rounded-xl bg-surface-container border border-surface-container-highest/60 overflow-hidden shadow-sm">
+<div class="grid grid-cols-2 divide-x divide-surface-container-highest/50">
+<!-- Route Card (Left) -->
+<div class="p-3.5 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1.5">
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Strecke 3</span>
+<!-- Status Badge GRÜN -->
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-label-sm text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  Frei
+                </span>
+</div>
+<h2 class="font-headline-sm text-sm font-bold text-on-surface leading-tight">
+                Sportzentrum Deutz
+              </h2>
+<p class="font-body-sm text-xs text-emerald-300/90 font-medium mt-1 leading-snug">
+                Freie Fahrt ohne Stau
+              </p>
+</div>
+<div class="pt-3 mt-1 border-t border-surface-container-highest/30 flex items-baseline justify-between">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Fahrzeit</span>
+<span class="font-label-md text-xs font-bold text-emerald-300">18 Min (Normal)</span>
+</div>
+</div>
+<!-- Associated Gas Station (Right) -->
+<div class="p-3.5 flex flex-col justify-between bg-surface-container-low/50">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1.5">
+<span class="font-label-sm text-[10px] text-tertiary-container font-semibold uppercase tracking-wider">Günstigste</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">0,4 km</span>
+</div>
+<h3 class="font-headline-sm text-sm font-bold text-on-surface leading-tight truncate">
+                Total Kölner Str.
+              </h3>
+<div class="mt-1 flex items-baseline gap-1">
+<span class="font-headline-sm text-base font-bold text-tertiary tracking-tight">1,61⁹ €</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Diesel</span>
+</div>
+</div>
+<div class="pt-3 mt-1 border-t border-surface-container-highest/30 flex items-center justify-between">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Super E10</span>
+<span class="font-label-md text-xs font-semibold text-on-surface">1,69⁹ €</span>
+</div>
+</div>
+</div>
+</div>
+<!-- PAIR 4: Feierabend-Route (GRÜN / FREI) + HEM Tankstelle -->
+<div class="rounded-xl bg-surface-container border border-surface-container-highest/60 overflow-hidden shadow-sm">
+<div class="grid grid-cols-2 divide-x divide-surface-container-highest/50">
+<!-- Route Card (Left) -->
+<div class="p-3.5 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1.5">
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Strecke 4</span>
+<!-- Status Badge GRÜN -->
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-label-sm text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  Frei
+                </span>
+</div>
+<h2 class="font-headline-sm text-sm font-bold text-on-surface leading-tight">
+                Heimweg via B8
+              </h2>
+<p class="font-body-sm text-xs text-emerald-300/90 font-medium mt-1 leading-snug">
+                Flüssiger Stadtverkehr
+              </p>
+</div>
+<div class="pt-3 mt-1 border-t border-surface-container-highest/30 flex items-baseline justify-between">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Fahrzeit</span>
+<span class="font-label-md text-xs font-bold text-emerald-300">24 Min (Normal)</span>
+</div>
+</div>
+<!-- Associated Gas Station (Right) -->
+<div class="p-3.5 flex flex-col justify-between bg-surface-container-low/50">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1.5">
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Pendler-Tipp</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">1,2 km</span>
+</div>
+<h3 class="font-headline-sm text-sm font-bold text-on-surface leading-tight truncate">
+                HEM Bergisch Gladb.
+              </h3>
+<div class="mt-1 flex items-baseline gap-1">
+<span class="font-headline-sm text-base font-bold text-tertiary tracking-tight">1,62⁹ €</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Diesel</span>
+</div>
+</div>
+<div class="pt-3 mt-1 border-t border-surface-container-highest/30 flex items-center justify-between">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Super E10</span>
+<span class="font-label-md text-xs font-semibold text-on-surface">1,70⁹ €</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Action / Add Route Button (Minimal) -->
+<div class="mt-4 pt-1">
+<button class="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-surface-container hover:bg-surface-container-high border border-surface-container-highest text-on-surface-variant hover:text-on-surface font-medium transition-colors text-xs">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>Weitere Strecke &amp; Tankstelle hinzufügen</span>
+</button>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface-container-lowest/90 backdrop-blur-xl border-t border-surface-container-highest/40 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+<div class="flex justify-around items-center h-16 px-2">
+<a aria-current="page" class="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[48px] px-2 transition-colors text-primary-container font-semibold" data-path="dashboard" href="#">
+<span class="material-symbols-outlined text-[22px]">speed</span>
+<span class="font-label-sm text-[11px] tracking-normal">Übersicht</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[48px] px-2 text-on-surface-variant hover:text-on-surface transition-colors" data-path="routen" href="#">
+<span class="material-symbols-outlined text-[22px]">alt_route</span>
+<span class="font-label-sm text-[11px] tracking-normal">Routen</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[48px] px-2 text-on-surface-variant hover:text-on-surface transition-colors" data-path="tankstellen" href="#">
+<span class="material-symbols-outlined text-[22px]">local_gas_station</span>
+<span class="font-label-sm text-[11px] tracking-normal">Tankstellen</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[48px] px-2 text-on-surface-variant hover:text-on-surface transition-colors" data-path="warnungen" href="#">
+<span class="material-symbols-outlined text-[22px]">warning</span>
+<span class="font-label-sm text-[11px] tracking-normal">Warnungen</span>
+</a>
+</div>
+</nav>
+<script>
+    (function() {
+      function updateCockpitClock() {
+        const el = document.getElementById('cockpit-live-timestamp');
+        if (!el) return;
+        const now = new Date();
+        const options = { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' };
+        const formatted = now.toLocaleDateString('de-DE', options).replace(',', ' ·');
+        el.textContent = formatted + ' MEZ';
+      }
+      updateCockpitClock();
+      setInterval(updateCockpitClock, 30000);
+    })();
+  </script>
+</body></html>
