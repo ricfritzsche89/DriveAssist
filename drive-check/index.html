@@ -13,91 +13,66 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
 <div id="app">
 
   <header class="topbar">
-    <span class="logo-dot"></span>
-    <h1>Drive Check</h1>
-    <span class="conn-state" id="conn-state">…</span>
+    <img class="logo-img" src="./icons/icon-192.png" alt="DriveAssist" />
+    <div class="brand">
+      <span class="brand-eyebrow">CO-PILOT</span>
+      <span class="brand-name">Dashboard</span>
+    </div>
+    <span class="live-badge" id="conn-state">…</span>
+    <button class="icon-btn" id="btn-settings" aria-label="Einstellungen">
+      <span class="material-symbols-outlined">settings</span>
+    </button>
   </header>
 
   <!-- ============ DASHBOARD ============ -->
   <main class="view" id="view-dashboard">
-    <!-- Welcome & Live-Badge -->
+    <!-- Driver Greeting & info bar -->
     <section class="dash-head">
-      <div class="dash-head-left">
-        <div class="dash-time"><span>📅</span><span id="cockpit-live-timestamp">—</span></div>
+      <div>
+        <p class="dash-time" id="cockpit-live-timestamp">—</p>
         <h2 class="dash-greeting" id="dash-greeting">Dashboard</h2>
       </div>
-      <span class="chip-live"><span class="live-dot"></span>LIVE</span>
+      <span class="dash-count" id="dash-fav-count">Favoriten</span>
     </section>
 
-    <!-- Live Commute Primary Turn & Status Card -->
-    <div id="dashboard-hero"></div>
-
-    <!-- Live Disruption / Incident Warnings -->
-    <section class="section" id="dash-disruptions-wrap" hidden>
-      <div class="section-head">
-        <h2 id="dash-disruptions-title">STRECKENMELDUNGEN</h2>
-        <span class="chip-warn" id="dash-disruptions-chip">AKTIV</span>
-      </div>
-      <div id="dashboard-traffic-events"></div>
+    <!-- Column legend -->
+    <section class="dash-cols">
+      <div><span class="col-ico">alt_route</span><span>Strecke (Status)</span></div>
+      <div><span class="col-ico">local_gas_station</span><span>Günstigste Tankstelle</span></div>
     </section>
 
-    <!-- Verkehrsfluss & Tempo -->
-    <section class="section">
-      <div class="section-head">
-        <h2>VERKEHRSFLUSS &amp; TEMPO</h2>
-        <span class="chip-live">Echtzeit-Telemetrie</span>
-      </div>
-      <div id="dash-flow"></div>
-    </section>
+    <!-- Streamlined route + gas station pairs -->
+    <div class="pair-list" id="dash-pairs"></div>
 
-    <!-- Tanken -->
-    <section class="section">
-      <div class="section-head">
-        <h2 id="dash-fuel-title">MEINE TANKSTELLEN</h2>
-        <a class="link" href="#fuel" onclick="showView('fuel')">Alle</a>
-      </div>
-      <div id="dashboard-fuel-favs"></div>
-    </section>
+    <div class="dash-add">
+      <button class="dash-add-btn" id="dash-add-route">
+        <span class="material-symbols-outlined">add_circle</span>
+        <span>Weitere Strecke &amp; Tankstelle hinzufügen</span>
+      </button>
+    </div>
+  </main>
 
-    <!-- Cockpit Quick Access Shortcuts -->
-    <section class="section">
-      <div class="section-head"><h2>SCHNELLZUGRIFF</h2></div>
-      <div class="quick-grid">
-        <button class="quick-item" data-go="routes">
-          <span class="quick-ico">🧭</span>
-          <span class="quick-title">Routen-Check</span>
-          <span class="quick-sub">Stau &amp; Baustellen</span>
-        </button>
-        <button class="quick-item" data-go="map">
-          <span class="quick-ico">🗺️</span>
-          <span class="quick-title">Karte</span>
-          <span class="quick-sub">Strecken &amp; Standort</span>
-        </button>
-        <button class="quick-item" data-go="fuel">
-          <span class="quick-ico">⛽</span>
-          <span class="quick-title">Tanken</span>
-          <span class="quick-sub">Preise &amp; Favoriten</span>
-        </button>
-        <button class="quick-item" data-go="settings">
-          <span class="quick-ico">⚙️</span>
-          <span class="quick-title">Mehr</span>
-          <span class="quick-sub">Einheiten &amp; Backup</span>
-        </button>
-      </div>
-    </section>
+  <!-- ============ WARNUNGEN ============ -->
+  <main class="view" id="view-warnungen" hidden>
+    <div class="section">
+      <div class="section-head"><h2>WARNUNGEN</h2><span class="chip-warn" id="warnings-chip">—</span></div>
+      <div id="warnings-list"></div>
+    </div>
+    <p class="hint">Meldungen auf deinen gespeicherten Strecken (Autobahn GmbH API, live). Tschechien liefert aktuell keine freie Live-Quelle.</p>
   </main>
 
   <!-- ============ MEINE STRECKEN ============ -->
   <main class="view" id="view-routes" hidden>
     <div class="section">
-      <div class="section-head"><h2>MEINE STRECKEN</h2></div>
+      <div class="section-head"><h2>MEINE STRECKEN</h2><a class="link" href="#map" onclick="showView('map')">Karte</a></div>
       <div id="routes-list"></div>
     </div>
 
@@ -244,31 +219,27 @@
         ⛽ Tanken DE: Tankerkönig / MTS-K (eigener kostenloser API-Key nötig)<br>
         ⛽ Tanken CZ: keine verifizierte freie API gefunden — manuelle Erfassung<br>
         🗺️ Karte/Routing: OpenStreetMap, Nominatim, OSRM (alle frei)<br><br>
-        Version 1.3 · Neues Cockpit-Dashboard mit Live-Verkehr, Ankunftszeit &amp; Bestpreis-Trend.
+        Version 1.4 · Kompakt-Dashboard: Strecken mit Status direkt neben der günstigsten Tankstelle.
       </p>
     </div>
   </main>
 
   <nav class="tabbar">
     <button data-view="dashboard" class="active">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-8 9 8"/><path d="M5 10v9h14v-9"/></svg>
-      Start
+      <span class="material-symbols-outlined">speed</span>
+      Übersicht
     </button>
     <button data-view="routes">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8 6h6a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4H8"/></svg>
-      Strecken
-    </button>
-    <button data-view="map">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 20l-6-2V4l6 2 6-2 6 2v14l-6-2-6 2z"/><path d="M9 6v14M15 4v14"/></svg>
-      Karte
+      <span class="material-symbols-outlined">alt_route</span>
+      Routen
     </button>
     <button data-view="fuel">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v15"/><path d="M4 11h8"/><path d="M14 9l3 2v6a1.5 1.5 0 0 0 3 0v-4l-2-2"/></svg>
-      Tanken
+      <span class="material-symbols-outlined">local_gas_station</span>
+      Tankstellen
     </button>
-    <button data-view="settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
-      Mehr
+    <button data-view="warnungen">
+      <span class="material-symbols-outlined">warning</span>
+      Warnungen
     </button>
   </nav>
 

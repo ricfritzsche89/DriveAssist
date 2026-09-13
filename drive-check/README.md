@@ -270,6 +270,26 @@ Live-Daten fälschlich als aktuell ausgegeben werden.
   Server ist daher nicht möglich. Das Dashboard zeigt in so einem Fall klar den
   Pflege-Hinweis statt Live-Daten vorzutäuschen.
 
+**v1.4 (Kompakt-Dashboard: Strecke + Bestpreis-Tankstelle)**
+- **Weiterentwickeltes Dashboard nach neuem Design-Preview:** Jede gespeicherte
+  Strecke erscheint als kompakte Karte mit zwei Spalten — links die **Strecke
+  (Status)**, rechts die **günstigste Tankstelle (Bestpreis)**.
+- **Status-Chip & Live-Badge:** Kompakter Status-Chip (FREI/HINWEIS/BEHINDERT/
+  GESPERRT) mit Material-3-Icon pro Strecke; LIVE/OFFLINE-Pill im Kopf.
+- **Tankstellen-Zuteilung:** Die Favoriten werden pro Strecke automatisch
+  zugeordnet — zuerst nach günstigstem Preis, danach nach kürzester Distanz
+  zur Route (`geo.js`-Entfernung, „X km neben der Route“). Günstigste Anbieter
+  erhalten so bevorzugt eine Strecke, ohne dass Favoriten doppelt vergeben werden.
+- **Neuer Header:** Logo, „CO-PILOT / Dashboard“-Branding und Einstellungs-Button
+  statt altem Kopfteil.
+- **Neuer Warnungen-Tab:** Vier-Tab-Navigation; alle Streckenmeldungen inklusive
+  Incident-Karten (Titel, Zeitstempel, Abstand, Dauer) gesammelt in einer eigenen
+  Ansicht mit aktiver-Warnungen-Zähler im Kopf.
+- **Schnellzugriff „Weitere Strecke & Tankstelle hinzufügen“:** Springt zur
+  Tanken-Ansicht, wenn bereits Favoriten existieren, sonst zum Strecken-Formular.
+- **Design-System:** JetBrains Mono für Preise/Metriken, Material Symbols für die
+  Iconografie; Fonts und SW-Cache (v8) aktualisiert.
+
 **v1.3 (Cockpit-Dashboard)**
 - **Neues Dashboard-Design:** HUD-Kopf mit Datum/Uhrzeit, LIVE-Badge und
   tageszeitabhängiger Begrüßung statt statischem Kopfteil.
